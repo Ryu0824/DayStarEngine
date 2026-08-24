@@ -23,6 +23,14 @@ public:
 	bool IsBound()const { return Payload && Payload->IsBound(); }
 
 	template<typename UserClass, ESPMode Mode>
+	void BindSP(const TSharedRef<UserClass, Mode>& InUserObject, RetVal(UserClass::* InMethod)(Args...))
+	{
+		Unbind();
+		Payload = new FSPMethodDelegatePayload<UserClass, Mode, RetVal, Args...>(InUserObject, InMethod);
+	}
+
+
+	template<typename UserClass, ESPMode Mode>
 	void BindSP(const TSharedPtr<UserClass, Mode>& InUserObject, RetVal (UserClass::*InMethod)(Args...))
 	{
 		Unbind();	

@@ -20,6 +20,13 @@ public:
 	}
 
 	template<typename UserClass, ESPMode Mode>
+	void AddSP(const TSharedRef<UserClass, Mode>& InUserObject, void (UserClass::* InMethod)(Args...))
+	{
+		auto* NewPayload = new FSPMethodDelegatePayload<UserClass, Mode, void, Args...>(InUserObject, InMethod);
+		Payloads.Add(NewPayload);
+	}
+
+	template<typename UserClass, ESPMode Mode>
 	void AddSP(const TSharedPtr<UserClass, Mode>& InUserObject, void (UserClass::* InMethod)(Args...))
 	{
 		auto* NewPayload = new FSPMethodDelegatePayload<UserClass, Mode, void, Args...>(InUserObject, InMethod);

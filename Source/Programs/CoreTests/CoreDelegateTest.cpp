@@ -30,8 +30,7 @@ TEST_F(CoreDelegateTestFixture, SinglecastDelegateLifetimeTest)
 	TDelegate<void(int32)> OnDamaged;
 	{
 		TSharedRef<FTestListner> Listener = MakeShared<FTestListner>();
-		TSharedPtr<FTestListner> Listener2 = Listener;
-		OnDamaged.BindSP(Listener2, &FTestListner::OnTakeDamage);
+		OnDamaged.BindSP(Listener, &FTestListner::OnTakeDamage);
 
 		EXPECT_TRUE(OnDamaged.IsBound());
 
@@ -49,17 +48,15 @@ TEST_F(CoreDelegateTestFixture, MulticastDelegateDeadListenerTest)
 	TMulticastDelegate<void(int32)> OnGloabalEvent;
 
 	TSharedRef<FTestListner> AliveListener = MakeShared<FTestListner>();
-	TSharedPtr<FTestListner> AliveListener2 = AliveListener;
-	OnGloabalEvent.AddSP(AliveListener2, &FTestListner::OnTakeDamage);
+	OnGloabalEvent.AddSP(AliveListener, &FTestListner::OnTakeDamage);
 
 	{
 		TSharedRef<FTestListner> ShortLivedListener = MakeShared<FTestListner>();
-		TSharedPtr<FTestListner> ShortLivedListener2 = ShortLivedListener;
-		OnGloabalEvent.AddSP(ShortLivedListener2, &FTestListner::OnTakeDamage);
+		OnGloabalEvent.AddSP(ShortLivedListener, &FTestListner::OnTakeDamage);
 
 		OnGloabalEvent.Broadcast(5);
 		EXPECT_EQ(AliveListener->HitCount, 5);
-		EXPECT_EQ(ShortLivedListener2->HitCount, 5);
+		EXPECT_EQ(ShortLivedListener->HitCount, 5);
 	}
 	OnGloabalEvent.Broadcast(10);
 	EXPECT_EQ(AliveListener->HitCount, 15);
