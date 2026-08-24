@@ -14,7 +14,7 @@ namespace SharedPointerInternals
 	struct FReferenceControllerBase
 	{
 		void* operator new(SIZE_T Size) { return FMemory::Malloc(Size); }
-		void operator delete(void* Ptr) { FMemory::Free(ptr); }
+		void operator delete(void* Ptr) { FMemory::Free(Ptr); }
 	};
 
 	template<ESPMode Mode>
