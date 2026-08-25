@@ -19,7 +19,7 @@ template<typename UserClass, ESPMode Mode, typename RetVal, typename... Args>
 class FSPMethodDelegatePayload : public IDelegateInstance<RetVal, Args...>
 {
 public:
-	typedef RetVal (UserClass::* MethodPtr)(Args...);
+	using MethodPtr = RetVal (UserClass::*)(Args...);
 
 	FSPMethodDelegatePayload(const TSharedPtr<UserClass, Mode>& InUserObject, MethodPtr InMethod)
 		:UserObjectContext(InUserObject)

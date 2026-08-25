@@ -72,8 +72,8 @@ TEST_F(CoreContainerTestFixture, UnrealStringTEST)
 
 	EXPECT_EQ(Str.Len(), 7);
 
-	//const TCHAR* CStr = *Str;
-	//EXPECT_EQ(CStr[0], TEXT("D"));
-	//EXPECT_EQ(CStr[6], TEXT("r"));
-	//EXPECT_EQ(CStr[7], 0);
+	const TCHAR* CStr = *Str;
+	EXPECT_EQ(CStr[0], TEXT("D"));
+	EXPECT_EQ(CStr[6], TEXT("r"));
+	EXPECT_EQ(CStr[7], 0);
 }
