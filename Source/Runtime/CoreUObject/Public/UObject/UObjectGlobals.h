@@ -12,8 +12,8 @@ T* NewObject()
 	void* ObjMemory = FMemory::Malloc(TargetClass->ClassSize);
 
 	FMemory::Memzero(ObjMemory, TargetClass->ClassSize);
-
-	T* NewObj = new(ObjMemory)T();
+	
+	T* NewObj = ::new(ObjMemory) T();
 
 	NewObj->ClassPrivate = TargetClass;
 	NewObj->ObjectFlags = RF_NoFlags;

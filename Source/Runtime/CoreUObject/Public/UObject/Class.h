@@ -21,7 +21,7 @@ public:
 class COREUOBJECT_API UClass : public UStruct
 {
 public:
-	using ClassConstructorType = UObject *(*)(void* AllocatedMemory);
+	using ClassConstructorType = UObject* (*)(void* AllocatedMemory);
 
 	ClassConstructorType ClassConstructor = nullptr;
 
