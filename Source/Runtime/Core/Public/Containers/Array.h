@@ -14,6 +14,39 @@ public:
 	TArray() :ArrayNum(0), ArrayMax(0) {}
 	~TArray() { Empty(); }
 
+	TArray(const TArray& Other)
+		:ArrayNum(0), ArrayMax(0)
+	{
+		if (Other.ArrayNum > 0)
+		{
+			Reserve(Other.ArrayMax);
+
+			for (int32 i = 0;i < Other.ArrayNum;++i)
+			{
+				Add(Other.GetData()[i]);
+			}
+		}
+	}
+
+	TArray& operator=(const TArray& Other)
+	{
+		if (this != &Other)
+		{
+			Empty();
+
+			if (Other.ArrayNum > 0)
+			{
+				Reserve(Other.ArrayMax);
+
+				for (int32 i = 0;i < Other.ArrayNum;++i)
+				{
+					Add(Other.GetData()[i]);
+				}
+			}
+		}
+		return *this;
+	}
+
 	void Add(const ElementType& Item)
 	{
 		if (ArrayNum >= ArrayMax)

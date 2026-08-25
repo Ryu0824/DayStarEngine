@@ -46,6 +46,7 @@ TEST_F(CoreUObjectTestFixture, NewObjectAllocationTest)
 
 	UClass* ObjClass = MyObj->GetClass();
 	EXPECT_NE(ObjClass, nullptr);
+
 	EXPECT_STREQ(*(ObjClass->Name), TEXT("UTestDummyObject"));
 
 	MyObj->~UTestDummyObject();

@@ -49,7 +49,6 @@ TEST_F(CoreDelegateTestFixture, MulticastDelegateDeadListenerTest)
 
 	TSharedRef<FTestListner> AliveListener = MakeShared<FTestListner>();
 	OnGloabalEvent.AddSP(AliveListener, &FTestListner::OnTakeDamage);
-
 	{
 		TSharedRef<FTestListner> ShortLivedListener = MakeShared<FTestListner>();
 		OnGloabalEvent.AddSP(ShortLivedListener, &FTestListner::OnTakeDamage);
