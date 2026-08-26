@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(GarbageCollectionTest
-	CoreUObjectTests/GarbageCollectionTest.cpp
+add_executable(AssertionTest
+	CoreTests/AssertionTest.cpp
 )
 
-target_link_libraries(GarbageCollectionTest PRIVATE Core CoreUObject gtest_main)
+target_link_libraries(AssertionTest PRIVATE Core CoreUObject gtest_main)

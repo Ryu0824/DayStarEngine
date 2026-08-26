@@ -1,6 +1,7 @@
 #include "HAL/FMemory.h"
 #include "HAL/FMalloc.h"
 #include "MISC/AssertionMacros.h"
+#include <cstring>
 #include <cstdlib>
 
 class FMallocStd : public FMalloc

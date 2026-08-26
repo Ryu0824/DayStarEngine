@@ -1,6 +1,8 @@
 set(CORE_SOURCES
 	Private/HAL/FMemory.cpp
 	Private/Containers/UnrealString.cpp
+	Private/HAL/PlatformMisc.cpp
+	Private/Logging/LogMacros.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})
