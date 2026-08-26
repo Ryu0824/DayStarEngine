@@ -89,6 +89,8 @@ public:
 	int32 Num() const { return ArrayNum; }
 	ElementType* GetData() const { return static_cast<ElementType*>(AllocatorInstance.Data); }
 
+	ElementType& operator[](int Index) { check(Index < ArrayMax); return static_cast<ElementType*>(AllocatorInstance.Data)[Index];}
+
 private:
 	typename Allocator::ForAnyElementType AllocatorInstance;
 	int32 ArrayNum;

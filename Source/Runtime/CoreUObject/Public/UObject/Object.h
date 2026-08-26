@@ -2,14 +2,15 @@
 #include "CoreTypes.h"
 #include "CoreUObjectAPI.h"
 #include "UObject/ObjectMacros.h"
+#include "Containers/Array.h"
 
 class UClass;
 
 enum EObjectFlags : uint32
 {
 	RF_NoFlags = 0,
-	RF_Public = 1 << 0,
-	RF_Marked = 1 << 1,
+	RF_RootSet = 1 << 0,
+	RF_Reachable = 1 << 1,
 	RF_PendingKill = 1 << 2,
 };
 
@@ -23,6 +24,12 @@ public:
 
 	void* operator new(SIZE_T Size) = delete;
 	void operator delete(void* Ptr) = delete;
+
+	bool HasAnyFlags(uint32 FlagsToCheck) const { return (ObjectFlags & FlagsToCheck) != 0; }
+	void SetFlags(uint32 NewFlags) { ObjectFlags |= NewFlags; }
+	void ClearFlags(uint32 FlagsToClear) { ObjectFlags &= ~FlagsToClear; }
+
+	virtual void AddReferencedObjects(TArray<UObject*>& OutReachableObject) {};
 
 private:
 	UClass* ClassPrivate;

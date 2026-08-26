@@ -3,6 +3,7 @@
 #include "UObject/Object.h"
 #include "UObject/Class.h"
 #include <new>
+#include "UObjectArray.h"
 
 template<typename T>
 T* NewObject()
@@ -17,6 +18,8 @@ T* NewObject()
 
 	NewObj->ClassPrivate = TargetClass;
 	NewObj->ObjectFlags = RF_NoFlags;
+
+	GUObjectArray.AllocateUObjectIndex(NewObj);
 
 	return NewObj;
 }
