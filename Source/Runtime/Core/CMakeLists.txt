@@ -4,6 +4,8 @@ set(CORE_SOURCES
 	Private/HAL/PlatformMisc.cpp
 	Private/Logging/LogMacros.cpp
 	Private/MISC/AssertionMacros.cpp
+	Private/MISC/OutputDeviceRedirector.cpp
+	Private/MISC/OutputDeviceConsole.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})

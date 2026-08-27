@@ -1,4 +1,5 @@
 #include "MISC/AssertionMacros.h"
+#include "MISC/OutputDeviceRedirector.h"
 #include <cstdio>
 #include <cstdarg>
 
@@ -43,9 +44,5 @@ void FDebug::Logf_Internal(const TCHAR* Format, ...)
 #endif
 	va_end(Args);
 
-#if PLATFORM_WINDOWS
-	wprintf(TEXT("[CRITICAL] %s \n"), Buffer);
-#else
-	printf(TEXT("[CRITICAL] %ls \n"), Buffer);
-#endif
+	GLog->Serialize(Buffer, ELogVerbosity::Fatal, LogCore);
 }

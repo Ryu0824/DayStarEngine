@@ -1,16 +1,15 @@
 #pragma once
 #include "MISC/OutputDevice.h"
+#include "Containers/Array.h"
 
-class FOutputDeviceRedirector : public FOutputDevice
+class CORE_API FOutputDeviceRedirector : public FOutputDevice
 {
-private:
-	TArray<FOutputDevice*> OutputDevices;
-
 public:
-	void AddOutputDevice(FOutputDevice* InDevice)
-	{
-		OutputDevices.Add(InDevice);
-	}
+	void AddOutputDevice(FOutputDevice* InDevice);
+	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const FLogCategoryBase& Category);
 
-	virtual void Serialize(const )
+private:
+	TArray<FOutputDevice*> BufferDevices;
 };
+
+extern CORE_API FOutputDeviceRedirector* GLog;
