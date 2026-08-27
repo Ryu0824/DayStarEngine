@@ -1,6 +1,8 @@
 set(COREUOBJECT_SOURCES
 	Private/UObject/Object.cpp
 	Private/UObject/Class.cpp
+	Private/UObject/GarbageCollection.cpp
+	Private/UObject/UObjectArray.cpp
 )
 
 add_library(CoreUObject SHARED ${COREUOBJECT_SOURCES})

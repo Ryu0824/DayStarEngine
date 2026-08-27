@@ -1,31 +1,53 @@
 #pragma once
-#include <cassert>
-#include <iostream>
+#include "Logging/LogVerbosity.h"
+#include "Logging/LogMacros.h"
+#include "HAL/PlatformMisc.h"
 
-#if PLATFORM_WINDOWS
-	#define PLATFORM_BREAK() __debugbreak()
-#else
-	#define PLATFORM_BREAK() __builtin_trap()
+struct FDebug
+{
+	static void Logf_Internal(const TCHAR* Format, ...);
+};
+
+extern CORE_API void ReportAssertFailed(const TCHAR* Expr, const char* File, int Line);
+
+extern CORE_API void ReportAssertFailed(const TCHAR* Expr, const char* File, int Line, const TCHAR* Format, ...);
+
+extern CORE_API void ReportEnsureFailed(const TCHAR* Expr, const char* File, int Line);
+
+#ifndef DO_CHECK
+#define DO_CHECK 1
 #endif
 
-#if !UE_BUILD_SHIPPING
-	#define check(expr) \
-		if(!(expr)) { \
-			std::cerr << "[DayStar] Fatal Error : Assertion failed: " << #expr \
-					  << " File: "<<__FILE__<<" Line : "<<__LINE__<<std::endl;\
-			PLATFORM_BREAK(); \
-		}
-#else
-	#define check(expr)
-#endif
+#if DO_CHECK
+#define check(expr) \
+		do{ \
+			if (!(expr)) {\
+				ReportAssertFailed(TEXT(#expr),__FILE__,__LINE__); \
+				FPlatformMisc::DebugBreak();\
+			}\
+		} while(false)
 
-#if !UE_BUILD_SHIPPING
-	#define ensure(expr) (!!(expr) || \
-		([&]() -> bool {\
-			std::cerr << "[DayStar] Ensure failed: "<< #expr \
-					  << " File: "<<__FILE__<<" Line : "<<__LINE__<<std::endl;\
+#define checkf(expr, format, ...)\
+		do{ \
+			if (!(expr)) {\
+				ReportAssertFailed(TEXT(#expr),__FILE__,__LINE__, format ,##__VA_ARGS__); \
+				FPlatformMisc::DebugBreak(); \
+			}\
+		} while (false)
+
+#define ensure(expr) \
+		(!!(expr) || ([](){ \
+			static bool bExcuted = false; \
+			if (!bExcuted) { \
+			bExcuted = true; \
+			ReportEnsureFailed(TEXT(#expr),__FILE__,__LINE__);\
+			} \
 			return false; \
-			}()))
+		}()))
 #else
-	#define ensure(expr) (!!(expr))
+#define check(expr)
+#define checkf(expr, format);
+#define ensure(expr) (!!(expr))
 #endif
+
+DECLARE_LOG_CATEGORY_EXTERN(LogCore, Log);
