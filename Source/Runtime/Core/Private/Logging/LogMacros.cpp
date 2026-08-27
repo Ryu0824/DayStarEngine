@@ -3,20 +3,7 @@
 #include <cstdio>
 #include <cstdarg>
 
-DEFINE_LOG_CATEGORY(LogCore);
-
-void ReportAssertFailed(const TCHAR* Expr, const char* File, int Line, const TCHAR* Format, ...)
-{
-	DS_LOG(LogCore, Fatal, TEXT("Assertion failed: %s [File: %s] [Line: $d]"), ##__VA_ARGS__);
-}
-
-void ReportEnsureFailed(const TCHAR* ExprString, const char* File, int Line)
-{
-	DS_LOG(LogCore, Error, TEXT("Ensure failed: %s. [File: %s] [Line: $d]"), ExprString, File, Line);
-	FPlatformMisc::DebugBreak();
-}
-
-void FLog::Logf(const FLogCategoryBase& Category, ELogVerbosity Verbosity, const TCHAR* Format, ...)
+void FMsg::Logf(const char* File, int Line, const FLogCategoryBase& Category, ELogVerbosity::Type Verbosity, const TCHAR* Format, ...)
 {
 	va_list Args;
 	va_start(Args, Format);
@@ -31,9 +18,9 @@ void FLog::Logf(const FLogCategoryBase& Category, ELogVerbosity Verbosity, const
 	va_end(Args);
 
 	const TCHAR* VerbosityStr = TEXT("LOG");
-	if (Verbosity == ELogVerbosity::Fatal) VerbosityStr = TEXT("FATAL");
-	else if (Verbosity == ELogVerbosity::Error) VerbosityStr = TEXT("ERROR");
-	else if (Verbosity == ELogVerbosity::Warning) VerbosityStr = TEXT("WARNING");
+	if (Verbosity & ELogVerbosity::Fatal) VerbosityStr = TEXT("FATAL");
+	else if (Verbosity & ELogVerbosity::Error) VerbosityStr = TEXT("ERROR");
+	else if (Verbosity & ELogVerbosity::Warning) VerbosityStr = TEXT("WARNING");
 
 #if PLATFORM_WINDOWS
 	wprintf(TEXT("[%s] %s: %s\n"), Category.CategoryName, VerbosityStr, Buffer);

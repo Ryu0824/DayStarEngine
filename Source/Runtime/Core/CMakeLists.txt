@@ -3,6 +3,7 @@ set(CORE_SOURCES
 	Private/Containers/UnrealString.cpp
 	Private/HAL/PlatformMisc.cpp
 	Private/Logging/LogMacros.cpp
+	Private/MISC/AssertionMacros.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})

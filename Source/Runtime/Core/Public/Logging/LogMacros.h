@@ -1,15 +1,8 @@
 #pragma once
 #include "CoreTypes.h"
 #include "CoreAPI.h"
-
-enum class ELogVerbosity :uint8
-{
-	Fatal,
-	Error,
-	Warning,
-	Display,
-	Log,
-};
+#include "Logging/LogVerbosity.h"
+#include "HAL/PlatformMisc.h"
 
 struct FLogCategoryBase
 {
@@ -18,17 +11,25 @@ struct FLogCategoryBase
 };
 
 #define DECLARE_LOG_CATEGORY_EXTERN(CategoryName, DefaultVerbosity) \
-	extern CORE_API struct FLogCategory##CategoryName : public FLogCategoryBase { \
+	extern struct FLogCategory##CategoryName : public FLogCategoryBase { \
 		FLogCategory##CategoryName() : FLogCategoryBase(TEXT(#CategoryName)){} \
 	} CategoryName
 
 #define DEFINE_LOG_CATEGORY(CategoryName) \
 	FLogCategory##CategoryName CategoryName
 
-struct CORE_API FLog
+struct CORE_API FMsg
 {
-	static void Logf(const FLogCategoryBase& Category, ELogVerbosity Verbosity, const TCHAR* Format, ...);
+	static void Logf(const char* File, int Line, const FLogCategoryBase& Category, ELogVerbosity::Type Verbosity, const TCHAR* Format, ...);
 };
 
 #define DS_LOG(CategoryName, Verbosity, Format, ...) \
-	FLog::Logf(CategoryName, ELogVerbosity::Verbosity, Format, ##__VA_ARGS__)
+	do \
+	{ \
+		FMsg::Logf(__FILE__, __LINE__, CategoryName, Verbosity, Format, ##__VA_ARGS__); \
+		\
+		if (Verbosity & ELogVerbosity::Fatal)\
+		{\
+			FPlatformMisc::DebugBreak();\
+		}\
+	}while (false);

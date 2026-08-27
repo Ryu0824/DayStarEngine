@@ -10,6 +10,16 @@ protected:
 
 	}
 };
+DECLARE_LOG_CATEGORY_EXTERN(AssertionLog, Log);
+DEFINE_LOG_CATEGORY(AssertionLog);
+
+TEST_F(CoreAssertionTestFixture, DSLOGTEXT)
+{
+	int a = 10;
+	DS_LOG(AssertionLog, ELogVerbosity::Error, TEXT("ERROR TEST : %d"), a);
+
+	EXPECT_DEATH(DS_LOG(AssertionLog, ELogVerbosity::Fatal, TEXT("ERROR TEST : %d"), a), "");
+}
 
 TEST_F(CoreAssertionTestFixture, CheckMacroDeathTest)
 {
