@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(ModuleManagerTest
-	CoreTests/ModuleManagerTest.cpp
+add_executable(MathTest
+	CoreTests/MathTest.cpp
 )
 
-target_link_libraries(ModuleManagerTest PRIVATE Core CoreUObject gtest_main)
+target_link_libraries(MathTest PRIVATE Core CoreUObject gtest_main)
