@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(MathTest
-	CoreTests/MathTest.cpp
+add_executable(DynamicRHITest
+	RHITests/DynamicRHITest.cpp
 )
 
-target_link_libraries(MathTest PRIVATE Core CoreUObject gtest_main)
+target_link_libraries(DynamicRHITest PRIVATE Core RHI gtest_main)
