@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(OutputDeviceTest
-	CoreTests/OutputDeviceTest.cpp
+add_executable(ModuleManagerTest
+	CoreTests/ModuleManagerTest.cpp
 )
 
-target_link_libraries(OutputDeviceTest PRIVATE Core CoreUObject gtest_main)
+target_link_libraries(ModuleManagerTest PRIVATE Core CoreUObject gtest_main)

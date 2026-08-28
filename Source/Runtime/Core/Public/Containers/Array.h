@@ -90,6 +90,7 @@ public:
 	ElementType* GetData() const { return static_cast<ElementType*>(AllocatorInstance.Data); }
 
 	ElementType& operator[](int Index) { check(Index < ArrayMax); return static_cast<ElementType*>(AllocatorInstance.Data)[Index];}
+	const ElementType& operator[](int Index) const { check(Index < ArrayMax); return static_cast<ElementType*>(AllocatorInstance.Data)[Index];}
 
 private:
 	typename Allocator::ForAnyElementType AllocatorInstance;
