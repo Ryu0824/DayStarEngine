@@ -1,13 +1,14 @@
 #pragma once
-#include "Containers/UnrealString.h"
+#include "CoreTypes.h"
+#include "CoreAPI.h"
 #include "Logging/LogMacros.h"
 
-class FOutputDevice
+struct FLogCategoryBase;
+
+class CORE_API FOutputDevice
 {
 public:
-	virtual ~FOutPutDevice() = default;
+	virtual ~FOutputDevice() = default;
 
-	virtual void Serialize(const TCHAR* Message, ELogVerbosity Verbosity, const class FName& Category) = 0;
-
-	virtual void Flush() {};
+	virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const FLogCategoryBase& Category) = 0;
 };

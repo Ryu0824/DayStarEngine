@@ -4,6 +4,10 @@ set(CORE_SOURCES
 	Private/HAL/PlatformMisc.cpp
 	Private/Logging/LogMacros.cpp
 	Private/MISC/AssertionMacros.cpp
+	Private/MISC/OutputDeviceRedirector.cpp
+	Private/MISC/OutputDeviceConsole.cpp
+	Private/HAL/PlatformProcess.cpp
+	Private/Modules/ModuleManager.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})
@@ -24,3 +28,4 @@ elseif(UNIX)
 endif()
 
 target_compile_definitions(Core PRIVATE CORE_EXPORT=1)
+target_compile_definitions(Core PRIVATE UNICODE _UNICODE)
