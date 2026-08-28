@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(ModuleManagerTest
-	CoreTests/ModuleManagerTest.cpp
+add_executable(DynamicRHITest
+	RHITests/DynamicRHITest.cpp
 )
 
-target_link_libraries(ModuleManagerTest PRIVATE Core CoreUObject gtest_main)
+target_link_libraries(DynamicRHITest PRIVATE Core RHI gtest_main)
