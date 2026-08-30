@@ -32,5 +32,5 @@ private:
 
 };
 	
-#define ENQUEUE_RENDER_COMMAND(CommandName) \ 
+#define ENQUEUE_RENDER_COMMAND(CommandName) \
 	FRenderCommandQueue::Get().EnqueueCommand
