@@ -40,27 +40,7 @@ void FRenderCommandQueue::ExcuteCommands()
 	}
 }
 
-void FRenderCommandQueue::StartRenderThread()
+void FRenderCommandQueue::RequestStop()
 {
-	if (!bIsRunning)
-	{
-		bIsRunning = true;
-		RenderThreadHandle = new std::thread(&FRenderCommandQueue::ExcuteCommands, this);
-	}
-}
 
-void FRenderCommandQueue::StopRenderThread()
-{
-	if (bIsRunning)
-	{
-		bIsRunning = false;
-		QueueCondition.notify_all();
-
-		if (RenderThreadHandle && RenderThreadHandle->joinable())
-		{
-			RenderThreadHandle->join();
-		}
-		delete RenderThreadHandle;
-		RenderThreadHandle = nullptr;
-	}
 }

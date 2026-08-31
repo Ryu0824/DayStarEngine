@@ -17,8 +17,7 @@ public:
 
 	void ExcuteCommands();
 
-	void StartRenderThread();
-	void StopRenderThread();
+	void RequestStop();
 
 private:
 	FRenderCommandQueue() = default;
@@ -26,11 +25,5 @@ private:
 	std::queue<FRenderCommand> CommandQueue;
 	std::mutex QueueMutex;
 	std::condition_variable QueueCondition;
-
 	std::atomic<bool> bIsRunning{ false };
-	class std::thread* RenderThreadHandle = nullptr;
-
 };
-	
-#define ENQUEUE_RENDER_COMMAND(CommandName) \
-	FRenderCommandQueue::Get().EnqueueCommand
