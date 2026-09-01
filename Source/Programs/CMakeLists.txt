@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(DynamicRHITest
-	RHITests/DynamicRHITest.cpp
+add_executable(RenderCoreTest
+	RenderCoreTests/RenderCoreTest.cpp
 )
 
-target_link_libraries(DynamicRHITest PRIVATE Core RHI gtest_main)
+target_link_libraries(RenderCoreTest PRIVATE Core RHI RenderCore gtest_main)
