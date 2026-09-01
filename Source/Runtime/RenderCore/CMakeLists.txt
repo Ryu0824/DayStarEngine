@@ -1,5 +1,6 @@
 set(RENDERCORE_SOURCES
 	Private/RenderCommandQueue.cpp
+	Private/RenderingThread.cpp
 )
 
 add_library(RenderCore SHARED ${RENDERCORE_SOURCES})
@@ -19,6 +20,6 @@ elseif(UNIX)
 	target_compile_definitions(RenderCore PUBLIC PLATFORM_LINUX=1)
 endif()
 
-target_link_libraries(RenderCore PUBLIC Core)
+target_link_libraries(RenderCore PUBLIC Core RHI)
 
 target_compile_definitions(RenderCore PRIVATE RENDERCORE_EXPORT=1)

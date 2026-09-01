@@ -4,23 +4,21 @@
 static std::thread* GRenderThread = nullptr;
 static std::thread::id GRenderThreadId;
 
-void StartRenderThread()
+void StartRenderingThread()
 {
 	if (!GRenderThread)
 	{
 		GRenderThread = new std::thread([]()
 			{
 				GRenderThreadId = std::this_thread::get_id();
-
 				FRenderCommandQueue::Get().ExcuteCommands();
-			}
-		)
+			});
 	}
 }
 
-void StopRenderThread()
+void StopRenderingThread()
 {
-	if (bIsRunning)
+	if (GRenderThread)
 	{
 		FRenderCommandQueue::Get().RequestStop();
 

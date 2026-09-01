@@ -11,7 +11,7 @@ public:
 		if (Reference) { Reference->AddRef(); }
 	}
 
-	TRefCountPtr(const TRefCountPtr& Copy) : TRefCountPtr(Copy.Reference)
+	TRefCountPtr(const TRefCountPtr& Copy) : Reference(Copy.Reference)
 	{
 		if (Reference) { Reference->AddRef(); }
 	}
@@ -30,7 +30,7 @@ public:
 	T* Get() const { return Reference; }
 	bool IsValid() const { return Reference != nullptr; }
 
-	TRefCountPtr* operator=(T* InReference)
+	TRefCountPtr& operator=(T* InReference)
 	{
 		if (Reference != InReference)
 		{
