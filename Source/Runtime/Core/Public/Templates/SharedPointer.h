@@ -2,6 +2,7 @@
 #include "SharedPointerInternals.h"
 #include "Misc/AssertionMacros.h"
 #include <utility>
+#include <type_traits>
 
 template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe> class TSharedPtr;
 template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe> class TSharedRef;
@@ -102,8 +103,32 @@ public:
 		}
 	}
 
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr(const TSharedRef<OtherType, Mode>& InSharedRef)
+		:Object(InSharedRef.Object)
+		, ReferenceController(InSharedRef.ReferenceController)
+	{
+		if (ReferenceController)
+		{
+			ReferenceController->AddSharedReference();
+		}
+	}
+
 	TSharedPtr(const TSharedPtr& Other)
-		:Object(Other.Object)
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
+	{
+		if (ReferenceController)
+		{
+			ReferenceController->AddSharedReference();
+		}
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr(const TSharedPtr<OtherType, Mode>& Other)
+		: Object(Other.Object)
 		, ReferenceController(Other.ReferenceController)
 	{
 		if (ReferenceController)
@@ -168,6 +193,7 @@ private:
 	ObjectType* Object;
 	SharedPointerInternals::FReferenceController<Mode>* ReferenceController;
 
+	template<typename OtherType, ESPMode OtherMode> friend class TSharedPtr;
 	template<typename OtherType, ESPMode OtherMode> friend class TWeakPtr;
 };
 
@@ -251,4 +277,5 @@ private:
 	SharedPointerInternals::FReferenceController<Mode>* ReferenceController;
 
 	template<typename OtherType, ESPMode OtherMode> friend class TSharedPtr;
+
 };
