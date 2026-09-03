@@ -98,7 +98,7 @@ public:
 	}
 
 	template<typename OtherType>
-		requires std::is_convertible<OtherType*, ObjectType*>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
 	TSharedRef(TSharedRef<OtherType, Mode>&& Other) noexcept
 		: Object(Other.Object)
 		, ReferenceController(Other.ReferenceController)
@@ -405,7 +405,7 @@ public:
 			: 0;
 	}
 
-	[[nodisacrd]] bool IsUnique() const noexcept
+	[[nodiscard]] bool IsUnique() const noexcept
 	{
 		return ReferenceController != nullptr && ReferenceController->IsUnique();
 	}
@@ -666,8 +666,8 @@ TSharedPtr<ObjectType, Mode> TSharedRef<ObjectType, Mode>::ToSharedPtr() const n
 	return TSharedPtr<ObjectType, Mode>(*this);
 }
 
-template<typename ObjecType,ESPMode Mode>
-TWeakPtr<ObjecType, Mode> TSharedRef<ObjecType, Mode>::ToWeakPtr() const noexcept
+template<typename ObjectType,ESPMode Mode>
+TWeakPtr<ObjectType, Mode> TSharedRef<ObjectType, Mode>::ToWeakPtr() const noexcept
 {
 	return TWeakPtr<ObjectType, Mode>(*this);
 }

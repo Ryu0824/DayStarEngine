@@ -28,7 +28,7 @@ namespace SharedPointerInternals
 	{
 	private:
 		using FReferenceCount = std::conditional_t<
-			Mode = ESPMode::ThreadSafe,
+			Mode == ESPMode::ThreadSafe,
 			std::atomic<int32>,
 			int32>;
 
@@ -146,7 +146,7 @@ namespace SharedPointerInternals
 					std::terminate();
 				}
 
-				++AddWeakReference;
+				++WeakReferenceCount;
 			}
 		}
 
