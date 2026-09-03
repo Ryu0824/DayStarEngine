@@ -4,47 +4,115 @@
 #include <utility>
 #include <type_traits>
 
-template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe> class TSharedPtr;
-template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe> class TSharedRef;
-template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe> class TWeakPtr;
+template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe>
+class TSharedPtr;
+
+template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe>
+class TSharedRef;
+
+template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe>
+class TWeakPtr;
+
+template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe, typename... ArgTypes>
+TSharedRef<ObjectType, Mode> MakeShared(ArgTypes&&... Args);
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedPtr<CastToType, Mode> StaticCastSharedPtr(const TSharedPtr<CastFromType, Mode>& InSharedPtr);
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedRef<CastToType, Mode> StaticCastSharedRef(const TSharedRef<CastFromType, Mode>& InSharedRef);
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedPtr<CastToType, Mode> ConstCastSharedPtr(const TSharedPtr<CastFromType, Mode>& InSharedPtr);
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedRef<CastToType, Mode> ConstCastSharedRef(const TSharedRef<CastFromType, Mode>& InSharedRef);
+
+namespace SharedPointerInternals
+{
+	template<typename PointerType>
+	void CheckSharedRefObject(PointerType* InObject)
+	{
+		check(InObject != nullptr);
+
+		if (InObject == nullptr)
+		{
+			std::terminate();
+		}
+	}
+}
 
 template<typename ObjectType, ESPMode Mode>
 class TSharedRef
 {
 public:
+	// TSharedRef is not avilable that raw pointer is nullptr
 	TSharedRef() = delete;
 
-	explicit TSharedRef(ObjectType* InObject)
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	explicit TSharedRef(OtherType* InObject)
 		: Object(InObject)
-		, ReferenceController(new SharedPointerInternals::FReferenceController<Mode>())
+		, ReferenceController(nullptr)
 	{
-		check(Object != nullptr);
+		SharedPointerInternals::CheckSharedRefObject(InObject);
+		ReferenceController =
+			SharedPointerInternals::CreateReferenceController<OtherType, Mode>(
+				InObject,
+				std::default_delete<OtherType>{});
 	}
 
-	TSharedRef(const TSharedRef& Other)
-		:Object(Other.Object)
+	template<typename OtherType, typename DeleterType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedRef(OtherType* InObject, DeleterType&& InDeleter)
+		: Object(InObject)
+		, ReferenceController(nullptr)
+	{
+		SharedPointerInternals::CheckSharedRefObject(InObject);
+		ReferenceController =
+			SharedPointerInternals::CreateReferenceController<OtherType, Mode>(
+				InObject,
+				std::forward<DeleterType>(InDeleter));
+	}
+
+	TSharedRef(const TSharedRef& Other) noexcept
+		: Object(Other.Object)
 		, ReferenceController(Other.ReferenceController)
 	{
 		ReferenceController->AddSharedReference();
 	}
 
-	TSharedRef& operator=(const TSharedRef& Other)
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedRef(const TSharedRef<OtherType, Mode>& Other) noexcept
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
+	{
+		ReferenceController->AddSharedReference();
+	}
+
+	TSharedRef(TSharedRef&& Other) noexcept
+		: Object(std::exchange(Other.Object, nullptr))
+		, ReferenceController(std::exchange(Other.ReferenceController, nullptr))
+	{
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedRef(TSharedRef<OtherType, Mode>&& Other) noexcept
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
+	{
+		Other.Object = nullptr;
+		Other.ReferenceController = nullptr;
+	}
+
+	TSharedRef& operator=(const TSharedRef& Other) noexcept
 	{
 		if (this != &Other)
 		{
-			if (ReferenceController->ReleaseSharedReference())
-			{
-				delete Object;
-				Object = nullptr;
-				if (ReferenceController->ReleaseWeakReference())
-				{
-					delete ReferenceController;
-					ReferenceController = nullptr;
-				}
-			}
-			Object = Other.Object;
-			ReferenceController = Other.ReferenceController;
-			ReferenceController->AddSharedReference();
+			TSharedRef Temporary(Other);
+			Swap(Temporary);
 		}
 
 		return *this;
@@ -52,52 +120,155 @@ public:
 
 	~TSharedRef()
 	{
-		if (ReferenceController->ReleaseSharedReference())
+		if (ReferenceController != nullptr)
 		{
-			delete Object;
-			Object = nullptr;
-			if (ReferenceController->ReleaseWeakReference())
-			{
-				delete ReferenceController;
-				ReferenceController = nullptr;
-			}
+			ReferenceController->ReleaseSharedReference();
 		}
 	}
 
-	ObjectType& Get() const { return *Object; }
-	ObjectType* operator->() const { return Object; }
-	ObjectType& operator*() const { return *Object; }
+	[[nodiscard]] ObjectType& Get() const
+	{
+		SharedPointerInternals::CheckSharedRefObject(Object);
+		return *Object;
+	}
+
+	[[nodiscard]] ObjectType* operator->() const
+	{
+		SharedPointerInternals::CheckSharedRefObject(Object);
+		return Object;
+	}
+
+	[[nodiscard]] ObjectType& operator*() const
+	{
+		return Get();
+	}
+
+	[[nodiscard]] int32 GetSharedReferenceCount() const noexcept
+	{
+		return ReferenceController != nullptr
+			? ReferenceController->GetSharedReferenceCount()
+			: 0;
+	}
+
+	[[nodiscard]] bool IsUnique() const noexcept
+	{
+		return ReferenceController != nullptr && ReferenceController->IsUnique();
+	}
+
+	[[nodiscard]] TSharedPtr<ObjectType, Mode> ToSharedPtr() const noexcept;
+	[[nodiscard]] TWeakPtr<ObjectType, Mode> ToWeakPtr() const noexcept;
+
+	void Swap(TSharedRef& Other) noexcept
+	{
+		std::swap(Object, Other.Object);
+		std::swap(ReferenceController, Other.ReferenceController);
+	}
 
 private:
-	ObjectType* Object;
-	SharedPointerInternals::FReferenceController<Mode>* ReferenceController;
+	TSharedRef(
+		ObjectType* Inobject,
+		SharedPointerInternals::FReferenceControllerBase<Mode>* InReferenceController,
+		SharedPointerInternals::FAdoptControllerTag) noexcept
+		: Object(Inobject)
+		, ReferenceController(InReferenceController)
+	{
+		SharedPointerInternals::CheckSharedRefObject(Object);
+	}
 
-	template<typename OtherType, ESPMode OtherMode> friend class TSharedPtr;
-	template<typename OtherType, ESPMode OtherMode> friend class TWeakPtr;
+	TSharedRef(
+		ObjectType* Inobject,
+		SharedPointerInternals::FReferenceControllerBase<Mode>* InReferenceController,
+		SharedPointerInternals::FAddSharedReferenceTag) noexcept
+		: Object(Inobject)
+		, ReferenceController(InReferenceController)
+	{
+		SharedPointerInternals::CheckSharedRefObject(Object);
+		ReferenceController->AddSharedReference();
+	}
+
+	ObjectType* Object;
+	SharedPointerInternals::FReferenceControllerBase<Mode>* ReferenceController;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TSharedRef;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TSharedPtr;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TWeakPtr;
+
+	template<typename OtherType, ESPMode OtherMode, typename... ArgTypes>
+	friend TSharedRef<OtherType, OtherMode> MakeShared(ArgTypes&&... Args);
+
+	template<typename CastToType, typename CastFromType, ESPMode OtherMode>
+	friend TSharedRef<CastToType, OtherMode> StaticCastSharedRef(
+		const TSharedRef<CastFromType, OtherMode>& InSharedRef);
+
+	template<typename CastToType, typename CastFromType, ESPMode OtherMode>
+	friend TSharedRef<CastToType, OtherMode> ConstCastSharedRef(
+		const TSharedRef<CastFromType, OtherMode>& InSharedRef);
 };
 
 template<typename ObjectType, ESPMode Mode>
 class TSharedPtr
 {
-private:
-	TSharedPtr(const TWeakPtr<ObjectType, Mode>& InWeakRef)
-		:Object(InWeakRef.Object)
-		, ReferenceController(InWeakRef.ReferenceController)
-	{
-		if (ReferenceController)
-		{
-			ReferenceController->AddSharedReference();
-		}
-	}
-
 public:
-	TSharedPtr() :Object(nullptr), ReferenceController(nullptr) {}
+	TSharedPtr() noexcept
+		: Object(nullptr)
+		, ReferenceController(nullptr)
+	{
+	}
 
-	TSharedPtr(const TSharedRef<ObjectType, Mode>& InSharedRef)
-		:Object(InSharedRef.Object)
+	TSharedPtr(std::nullptr_t) noexcept
+		: TSharedPtr()
+	{
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	explicit TSharedPtr(OtherType* InObject)
+		: Object(InObject)
+		, ReferenceController(nullptr)
+	{
+		if (InObject != nullptr)
+		{
+			ReferenceController =
+				SharedPointerInternals::CreateReferenceController<OtherType, Mode>(
+					InObject,
+					std::default_delete<OtherType>{});
+		}
+	}
+
+	template<typename OtherType, typename DeleterType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr(OtherType* InObject, DeleterType&& InDeleter)
+		: Object(InObject)
+		, ReferenceController(nullptr)
+	{
+		if (InObject != nullptr)
+		{
+			ReferenceController =
+				SharedPointerInternals::CreateReferenceController<OtherType, Mode>(
+					InObject,
+					std::forward<DeleterType>(InDeleter));
+		}
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr(const TSharedRef<OtherType, Mode>& InSharedRef) noexcept
+		: Object(InSharedRef.Object)
 		, ReferenceController(InSharedRef.ReferenceController)
 	{
-		if (ReferenceController)
+		ReferenceController->AddSharedReference();
+	}
+
+	TSharedPtr(const TSharedPtr& Other) noexcept
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
+	{
+		if (ReferenceController != nullptr)
 		{
 			ReferenceController->AddSharedReference();
 		}
@@ -105,177 +276,498 @@ public:
 
 	template<typename OtherType>
 		requires std::is_convertible_v<OtherType*, ObjectType*>
-	TSharedPtr(const TSharedRef<OtherType, Mode>& InSharedRef)
-		:Object(InSharedRef.Object)
-		, ReferenceController(InSharedRef.ReferenceController)
+	TSharedPtr(const TSharedPtr<OtherType, Mode>& Other) noexcept
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
 	{
-		if (ReferenceController)
+		if (ReferenceController != nullptr)
 		{
 			ReferenceController->AddSharedReference();
 		}
 	}
 
-	TSharedPtr(const TSharedPtr& Other)
-		: Object(Other.Object)
-		, ReferenceController(Other.ReferenceController)
+	TSharedPtr(TSharedPtr&& Other) noexcept
+		: Object(std::exchange(Other.Object, nullptr))
+		, ReferenceController(std::exchange(Other.ReferenceController, nullptr))
 	{
-		if (ReferenceController)
-		{
-			ReferenceController->AddSharedReference();
-		}
 	}
 
 	template<typename OtherType>
 		requires std::is_convertible_v<OtherType*, ObjectType*>
-	TSharedPtr(const TSharedPtr<OtherType, Mode>& Other)
+	TSharedPtr(TSharedPtr<OtherType, Mode>&& Other) noexcept
 		: Object(Other.Object)
 		, ReferenceController(Other.ReferenceController)
 	{
-		if (ReferenceController)
-		{
-			ReferenceController->AddSharedReference();
-		}
+		Other.Object = nullptr;
+		Other.ReferenceController = nullptr;
 	}
 
-	TSharedPtr& operator=(const TSharedPtr& Other)
+	TSharedPtr& operator=(const TSharedPtr& Other) noexcept
 	{
 		if (this != &Other)
 		{
-			if (ReferenceController && ReferenceController->ReleaseSharedReference())
-			{
-				delete Object;
-				Object = nullptr;
-				if (ReferenceController->ReleaseWeakReference())
-				{
-					delete ReferenceController;
-					ReferenceController = nullptr;
-				}
-			}
-
-			Object = Other.Object;
-			ReferenceController = Other.ReferenceController;
-
-			if (ReferenceController)
-			{
-				ReferenceController->AddSharedReference();
-			}
+			TSharedPtr Temporary(Other);
+			Swap(Temporary);
 		}
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr& operator=(const TSharedPtr<OtherType, Mode>& Other) noexcept
+	{
+		TSharedPtr Temporary(Other);
+		Swap(Temporary);
+		return *this;
+	}
+
+	TSharedPtr& operator=(TSharedPtr&& Other) noexcept
+	{
+		if (this != &Other)
+		{
+			TSharedPtr Tempoary(std::move(Other));
+			Swap(Tempoary);
+		}
+
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr& operator=(const TSharedPtr<OtherType, Mode>&& Other) noexcept
+	{
+		TSharedPtr Temporary(std::move(Other));
+		Swap(Temporary);
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TSharedPtr& operator=(const TSharedRef<OtherType, Mode>& Other) noexcept
+	{
+		TSharedPtr Temporary(Other);
+		Swap(Temporary);
+		return *this;
+	}
+
+	TSharedPtr& operator=(std::nullptr_t) noexcept
+	{
+		Reset();
 		return *this;
 	}
 
 	~TSharedPtr()
 	{
-		if (ReferenceController)
+		if (ReferenceController != nullptr)
 		{
-			if (ReferenceController->ReleaseSharedReference())
-			{
-				delete Object;
-				Object = nullptr;
-				if (ReferenceController->ReleaseWeakReference())
-				{
-					delete ReferenceController;
-					ReferenceController = nullptr;
-				}
-			}
+			ReferenceController->ReleaseSharedReference();
 		}
 	}
 
-	ObjectType* Get() const { return Object; }
-	ObjectType* operator->() const
+	void Reset() noexcept
+	{
+		TSharedPtr Temporary;
+		Swap(Temporary);
+	}
+
+	void Swap(TSharedPtr& Other) noexcept
+	{
+		std::swap(Object, Other.Object);
+		std::swap(ReferenceController, Other.ReferenceController);
+	}
+
+	[[nodiscard]] ObjectType* operator->() const
 	{
 		check(Object != nullptr);
 		return Object;
 	}
-	ObjectType& operator*() const { return *Object; }
-	bool IsValid() const { return Object != nullptr; }
+
+	[[nodiscard]] ObjectType& operator*() const
+	{
+		check(Object != nullptr);
+		return *Object;
+	}
+
+	[[nodiscard]] bool IsValid() const noexcept
+	{
+		return Object != nullptr;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return IsValid();
+	}
+
+	[[nodiscard]] int32 GetSharedReferenceCount() const noexcept
+	{
+		return ReferenceController != nullptr
+			? ReferenceController->GetSharedReferenceCount()
+			: 0;
+	}
+
+	[[nodiscard]] bool IsUnique() const noexcept
+	{
+		return ReferenceController != nullptr && ReferenceController->IsUnique();
+	}
+
+	[[nodiscard]] TSharedRef<ObjectType, Mode> ToSharedRef() const
+	{
+		check(IsValid());
+
+		if (!IsValid())
+		{
+			std::terminate();
+		}
+
+		return TSharedRef<ObjectType, Mode>(
+			Object,
+			ReferenceController,
+			SharedPointerInternals::FAddSharedReferenceTag{});
+	}
 
 private:
-	ObjectType* Object;
-	SharedPointerInternals::FReferenceController<Mode>* ReferenceController;
+	template<typename OtherType>
+	TSharedPtr(
+		const TWeakPtr<OtherType, Mode>& InWeakPtr,
+		SharedPointerInternals::FFromWeakReferenceTag) noexcept
+		: Object(nullptr)
+		, ReferenceController(nullptr)
+	{
+		if (InWeakPtr.ReferenceController != nullptr &&
+			InWeakPtr.ReferenceController->ConditionallyAddSharedReference())
+		{
+			Object = InWeakPtr.Object;
+			ReferenceController = InWeakPtr.ReferenceController;
+		}
+	}
 
-	template<typename OtherType, ESPMode OtherMode> friend class TSharedPtr;
-	template<typename OtherType, ESPMode OtherMode> friend class TWeakPtr;
+	TSharedPtr(
+		ObjectType* InObject,
+		SharedPointerInternals::FReferenceControllerBase<Mode>* InReferenceController,
+		SharedPointerInternals::FAddSharedReferenceTag) noexcept
+		:Object(InObject)
+		, ReferenceController(InReferenceController)
+	{
+		if (ReferenceController != nullptr)
+		{
+			ReferenceController->AddSharedReference();
+		}
+	}
+
+	ObjectType* Object;
+	SharedPointerInternals::FReferenceControllerBase<Mode>* ReferenceController;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TSharedRef;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TSharedPtr;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TWeakPtr;
+
+	template<typename CastToType, typename CastFromType, ESPMode OtherMode>
+	friend TSharedPtr<CastToType, OtherMode> StaticCastSharedPtr(
+		const TSharedPtr<CastFromType, OtherMode>& InSharedPtr);
+
+	template<typename CastToType, typename CastFromType, ESPMode OtherMode>
+	friend TSharedPtr<CastToType, OtherMode> constCastSharedPtr(
+		const TSharedPtr<CastFromType, OtherMode>& InSharedPtr);
 };
 
 template<typename ObjectType, ESPMode Mode>
 class TWeakPtr
 {
 public:
-	TWeakPtr() :Object(nullptr), ReferenceController(nullptr) {};
+	TWeakPtr() noexcept
+		:Object(nullptr)
+		, ReferenceController(nullptr)
+	{
+	}
 
-	TWeakPtr(const TSharedPtr<ObjectType, Mode>& InSharedPtr)
-		:Object(InSharedPtr.Object)
+	TWeakPtr(std::nullptr_t) noexcept
+		:TWeakPtr()
+	{
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr(const TSharedPtr<OtherType, Mode>& InSharedPtr) noexcept
+		: Object(InSharedPtr.Object)
 		, ReferenceController(InSharedPtr.ReferenceController)
 	{
-		if (ReferenceController)
-		{
-			ReferenceController->AddWeakReference();
-		}
+		AddWeakReference();
 	}
 
-	TWeakPtr(const TWeakPtr& Other)
-		:Object(Other.Object)
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr(const TSharedRef<OtherType, Mode>& InSharedRef) noexcept
+		: Object(InSharedRef.Object)
+		, ReferenceController(InSharedRef.ReferenceController)
+	{
+		AddWeakReference();
+	}
+
+	TWeakPtr(const TWeakPtr& Other) noexcept
+		: Object(Other.Object)
 		, ReferenceController(Other.ReferenceController)
 	{
-		if (ReferenceController)
-		{
-			ReferenceController->AddWeakReference();
-		}
+		AddWeakReference();
 	}
 
-	TWeakPtr& operator=(const TWeakPtr& Other)
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr(const TWeakPtr<OtherType, Mode>& Other) noexcept
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
+	{
+		AddWeakReference();
+	}
+
+	TWeakPtr(TWeakPtr&& Other)noexcept
+		: Object(std::exchange(Other.Object, nullptr))
+		, ReferenceController(std::exchange(Other.ReferenceController, nullptr))
+	{
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr(const TWeakPtr<OtherType, Mode>&& Other) noexcept
+		: Object(Other.Object)
+		, ReferenceController(Other.ReferenceController)
+	{
+		Other.Object = nullptr;
+		Other.ReferenceController = nullptr;
+	}
+
+	TWeakPtr& operator=(const TWeakPtr& Other) noexcept
 	{
 		if (this != &Other)
 		{
-			if (ReferenceController && ReferenceController->ReleaseWeakReference())
-			{
-				delete ReferenceController;
-				ReferenceController = nullptr;
-				Object = nullptr;
-			}
-
-			Object = Other.Object;
-			ReferenceController = Other.ReferenceController;
-
-			if (ReferenceController)
-			{
-				ReferenceController->AddWeakReference();
-			}
+			TWeakPtr Temporary(Other);
+			Swap(Temporary);
 		}
+
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr& operator=(const TWeakPtr<OtherType, Mode>& Other) noexcept
+	{
+		TWeakPtr Temporary(Other);
+		Swap(Temporary);
+		return *this;
+	}
+
+	TWeakPtr& operator=(TWeakPtr&& Other) noexcept
+	{
+		if (this != &Other)
+		{
+			TWeakPtr Temporary(std::move(Other));
+			Swap(Temporary);
+		}
+
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr& operator=(const TWeakPtr<OtherType, Mode>&& Other) noexcept
+	{
+		TWeakPtr Temporary(std::move(Other));
+		Swap(Temporary);
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr& operator=(const TSharedPtr<OtherType, Mode>& Other) noexcept
+	{
+		TWeakPtr Temporary(Other);
+		Swap(Temporary);
+		return *this;
+	}
+
+	template<typename OtherType>
+		requires std::is_convertible_v<OtherType*, ObjectType*>
+	TWeakPtr& operator=(const TSharedRef<OtherType, Mode>& Other) noexcept
+	{
+		TWeakPtr Temporary(Other);
+		Swap(Temporary);
+		return *this;
+	}
+
+	TWeakPtr& operator=(std::nullptr_t) noexcept
+	{
+		Reset();
 		return *this;
 	}
 
 	~TWeakPtr()
 	{
-		if (ReferenceController)
+		if (ReferenceController != nullptr)
 		{
-			if (ReferenceController->ReleaseWeakReference())
-			{
-				delete ReferenceController;
-			}
+			ReferenceController->ReleaseWeakReference();
 		}
 	}
 
-	bool IsValid() const
+	void Reset() noexcept
+	{
+		TWeakPtr Temporary;
+		Swap(Temporary);
+	}
+
+	void Swap(TWeakPtr& Other) noexcept
+	{
+		std::swap(Object, Other.Object);
+		std::swap(ReferenceController, Other.ReferenceController);
+	}
+
+	[[nodiscard]] bool IsValid() const noexcept
 	{
 		return Object != nullptr &&
 			ReferenceController != nullptr &&
-			ReferenceController->SharedReferenceCount > 0;
+			ReferenceController->IsSharedReferenceValid();
 	}
 
-	TSharedPtr<ObjectType, Mode> Pin() const
+	[[nodiscard]] TSharedPtr<ObjectType, Mode> Pin() const noexcept
 	{
-		if (IsValid())
-		{
-			return TSharedPtr<ObjectType, Mode>(*this);
-		}
-		return TSharedPtr<ObjectType, Mode>();
+		return TSharedPtr<ObjectType, Mode>(
+			*this,
+			SharedPointerInternals::FFromWeakReferenceTag{});
 	}
 
 private:
+	void AddWeakReference() noexcept
+	{
+		if (ReferenceController != nullptr)
+		{
+			ReferenceController->AddWeakReference();
+		}
+	}
+
 	ObjectType* Object;
-	SharedPointerInternals::FReferenceController<Mode>* ReferenceController;
+	SharedPointerInternals::FReferenceControllerBase<Mode>* ReferenceController;
 
-	template<typename OtherType, ESPMode OtherMode> friend class TSharedPtr;
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TSharedRef;
 
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TSharedPtr;
+
+	template<typename OtherType, ESPMode OtherMode>
+	friend class TWeakPtr;
 };
+
+template<typename ObjectType, ESPMode Mode>
+TSharedPtr<ObjectType, Mode> TSharedRef<ObjectType, Mode>::ToSharedPtr() const noexcept
+{
+	return TSharedPtr<ObjectType, Mode>(*this);
+}
+
+template<typename ObjectType,ESPMode Mode>
+TWeakPtr<ObjectType, Mode> TSharedRef<ObjectType, Mode>::ToWeakPtr() const noexcept
+{
+	return TWeakPtr<ObjectType, Mode>(*this);
+}
+
+template<typename ObjectType, ESPMode Mode, typename... ArgTypes>
+TSharedRef<ObjectType, Mode> MakeShared(ArgTypes&&... Args)
+{
+	using FController = SharedPointerInternals::TInplaceReferenceController<ObjectType, Mode>;
+
+	FController* ReferenceController =
+		new FController(std::forward<ArgTypes>(Args)...);
+
+	return TSharedRef<ObjectType, Mode>(
+		ReferenceController->GetObject(),
+		ReferenceController,
+		SharedPointerInternals::FAdoptControllerTag{});
+}
+
+template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe>
+TSharedPtr<ObjectType, Mode> MakeShareable(ObjectType* InObject)
+{
+	return TSharedPtr<ObjectType, Mode>(InObject);
+}
+
+template<typename ObjectType, ESPMode Mode = ESPMode::NotThreadSafe, typename DeleterType>
+TSharedPtr<ObjectType, Mode> MakeShareable(ObjectType* InObject, DeleterType&& InDeleter)
+{
+	return TSharedPtr<ObjectType, Mode>(
+		InObject,
+		std::forward<DeleterType>(InDeleter));
+}
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedPtr<CastToType, Mode> StaticCastSharedPtr(
+	const TSharedPtr<CastFromType, Mode>& InsharedPtr)
+{
+	CastToType* CastObject = static_cast<CastToType*>(InsharedPtr.Object);
+
+	return TSharedPtr<CastToType, Mode>(
+		CastObject,
+		InsharedPtr.ReferenceController,
+		SharedPointerInternals::FAddSharedReferenceTag{});
+}
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedRef<CastToType, Mode> StaticCastSharedPtr(
+	const TSharedPtr<CastFromType, Mode>& InsharedRef)
+{
+	CastToType* CastObject = static_cast<CastToType*>(InsharedRef.Object);
+
+	return TSharedRef<CastToType, Mode>(
+		CastObject,
+		InsharedRef.ReferenceController,
+		SharedPointerInternals::FAddSharedReferenceTag{});
+}
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedPtr<CastToType, Mode> ConstCastSharedPtr(
+	const TSharedPtr<CastFromType, Mode>& InsharedPtr)
+{
+	CastToType* CastObject = const_cast<CastToType*>(InsharedPtr.Object);
+
+	return TSharedRef<CastToType, Mode>(
+		CastObject,
+		InsharedPtr.ReferenceController,
+		SharedPointerInternals::FAddSharedReferenceTag{});
+}
+
+template<typename CastToType, typename CastFromType, ESPMode Mode>
+TSharedRef<CastToType, Mode> ConstCastSharedPtr(
+	const TSharedPtr<CastFromType, Mode>& InsharedRef)
+{
+	CastToType* CastObject = const_cast<CastToType*>(InsharedRef.Object);
+
+	return TSharedRef<CastToType, Mode>(
+		CastObject,
+		InsharedRef.ReferenceController,
+		SharedPointerInternals::FAddSharedReferenceTag{});
+}
+
+template<typename ObjectType, ESPMode Mode>
+[[nodiscard]] bool operator==(const TSharedPtr<ObjectType, Mode>& Pointer, std::nullptr_t) noexcept
+{
+	return !Pointer.IsValid();
+}
+
+template<typename ObjectType, ESPMode Mode>
+[[nodiscard]] bool operator==(std::nullptr_t, const TSharedPtr<ObjectType, Mode>& Pointer) noexcept
+{
+	return !Pointer.IsValid();
+}
+
+template<typename ObjectType, ESPMode Mode>
+[[nodiscard]] bool operator!=(const TSharedPtr<ObjectType, Mode>& Pointer, std::nullptr_t) noexcept
+{
+	return Pointer.IsValid();
+}
+
+template<typename ObjectType, ESPMode Mode>
+[[nodiscard]] bool operator!=(std::nullptr_t, const TSharedPtr<ObjectType, Mode>& Pointer) noexcept
+{
+	return Pointer.IsValid();
+}
