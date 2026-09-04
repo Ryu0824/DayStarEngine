@@ -737,8 +737,8 @@ TSharedPtr<CastToType, Mode> ConstCastSharedPtr(
 }
 
 template<typename CastToType, typename CastFromType, ESPMode Mode>
-TSharedRef<CastToType, Mode> ConstCastSharedPtr(
-	const TSharedPtr<CastFromType, Mode>& InsharedRef)
+TSharedRef<CastToType, Mode> ConstCastSharedRef(
+	const TSharedRef<CastFromType, Mode>& InsharedRef)
 {
 	CastToType* CastObject = const_cast<CastToType*>(InsharedRef.Object);
 
