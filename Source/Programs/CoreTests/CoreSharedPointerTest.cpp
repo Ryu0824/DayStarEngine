@@ -23,6 +23,37 @@ struct FTestObject
 	~FTestObject() { GDestructorCount++; }
 };
 
+class FParentObject
+{
+private:
+	int32 Value;
+
+public:
+	int32 GetValue()const { return Value; }
+	void SetValue(const int32 InA) { Value = InA; }
+
+	virtual void FunctionTest()
+	{
+		std::cout << "Check Parent" << '\n';
+		Value = 5;
+	}
+};
+
+class FChildObject :public FParentObject
+{
+public:
+	virtual void FunctionTest()
+	{
+		std::cout << "Check Child" << '\n';
+		SetValue(10);
+	}
+
+	void ChildFunction()
+	{
+		SetValue(15);
+	}
+};
+
 TEST_F(CoreSharedPointerTestFixture, SharedPointerLifetimeTest)
 {
 	GDestructorCount = 0;
@@ -33,7 +64,7 @@ TEST_F(CoreSharedPointerTestFixture, SharedPointerLifetimeTest)
 		{
 			TSharedPtr<FTestObject> SharedPtr1 = SharedRef;
 			TSharedPtr<FTestObject> SharedPtr2 = SharedPtr1;
-			
+
 			EXPECT_TRUE(SharedPtr2.IsValid());
 			EXPECT_EQ(GDestructorCount, 0);
 		}
@@ -57,4 +88,21 @@ TEST_F(CoreSharedPointerTestFixture, WeakPointerPinTest)
 	EXPECT_FALSE(WeakPtr.IsValid());
 	TSharedPtr<FTestObject> FailedPin = WeakPtr.Pin();
 	EXPECT_FALSE(FailedPin.IsValid());
+}
+
+TEST_F(CoreSharedPointerTestFixture, SmartPointerDownCastingTest)
+{
+	TSharedPtr<FParentObject> testPtr(new FChildObject);
+
+	TSharedPtr<FChildObject> testChild = StaticCastSharedPtr<FChildObject>(testPtr);
+
+	EXPECT_NE(testChild, nullptr);
+
+	testPtr->FunctionTest();
+
+	EXPECT_EQ(testChild->GetValue(), 10);
+
+	testChild->ChildFunction();
+
+	EXPECT_EQ(testChild->GetValue(), 15);
 }

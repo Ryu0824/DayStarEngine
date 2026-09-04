@@ -48,7 +48,7 @@ class FMockApplication : public FGenericApplication
 public:
 	virtual void PumpMessages(const float TimeDelta) override
 	{
-		if (*MessageHandler)
+		if (MessageHandler)
 		{
 			MessageHandler->OnKeyDown(42, 0, false);
 			MessageHandler->OnWindowClose();
@@ -67,7 +67,7 @@ TEST_F(ApplicationCoreTestFixture, WindowCreationAndHandle)
 	FGenericWindowDefinition Def;
 	TSharedPtr<FGenericWindow> Window = App->MakeWindow(Def);
 
-	EXPECT_NE(*Window, nullptr);
+	EXPECT_NE(Window, nullptr);
 	EXPECT_EQ(Window->GetOSWindowHandle(), (void*)0xDEADBEEF);
 
 	FGenericApplicationMessageHandler* a = new FMockMessageHandler();
