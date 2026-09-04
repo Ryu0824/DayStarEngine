@@ -8,6 +8,7 @@ set(CORE_SOURCES
 	Private/MISC/OutputDeviceConsole.cpp
 	Private/HAL/PlatformProcess.cpp
 	Private/Modules/ModuleManager.cpp
+	Private/CoreGlobals.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})
