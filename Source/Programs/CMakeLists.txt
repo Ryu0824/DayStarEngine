@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(CoreSharedPointerTest
-	CoreTests/CoreSharedPointerTest.cpp
+add_executable(ApplicationCoreTests
+	ApplicationCoreTests/ApplicationCoreTests.cpp
 )
 
-target_link_libraries(CoreSharedPointerTest PRIVATE Core ApplicationCore gtest_main)
+target_link_libraries(ApplicationCoreTests PRIVATE Core ApplicationCore gtest_main)
