@@ -1,4 +1,7 @@
 set(ENGINE_SOURCES
+	Private/Components/ActorComponent.cpp
+	Private/GameFramework/Actor.cpp
+	Private/Engine/World.cpp
 )
 
 add_library(Engine SHARED ${ENGINE_SOURCES})
@@ -18,7 +21,7 @@ elseif(UNIX)
 	target_compile_definitions(Engine PUBLIC PLATFORM_LINUX=1)
 endif()
 
-target_link_libraries(Engine PUBLIC CoreUObject)
+target_link_libraries(Engine PUBLIC Core CoreUObject)
 
 target_compile_definitions(Engine PRIVATE ENGINE_EXPORT=1)
 target_compile_definitions(Engine PRIVATE UNICODE _UNICODE)
