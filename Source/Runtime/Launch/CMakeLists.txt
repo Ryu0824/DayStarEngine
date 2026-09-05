@@ -23,5 +23,4 @@ endif()
 
 target_link_libraries(Launch PUBLIC Core ApplicationCore RenderCore)
 
-target_compile_definitions(Launch PRIVATE LAUNCH_EXPORT=1)
 target_compile_definitions(Launch PRIVATE UNICODE _UNICODE)
