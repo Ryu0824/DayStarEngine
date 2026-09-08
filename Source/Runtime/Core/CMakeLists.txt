@@ -11,6 +11,9 @@ set(CORE_SOURCES
 	Private/CoreGlobals.cpp
 	Private/HAL/PageRegion.cpp
 	Private/HAL/Windows/WindowsPlatformMemory.cpp
+	Private/HAL/FMalloc.cpp
+	Private/HAL/MallocSystem.cpp
+	Private/HAL/SystemHeap.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})

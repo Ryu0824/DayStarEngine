@@ -1,71 +1,31 @@
 #include "HAL/FMemory.h"
-#include "HAL/FMalloc.h"
+#include "MallocSystem.h"
 #include "MISC/AssertionMacros.h"
 #include <cstring>
-#include <cstdlib>
+#include <new>
 
-
-
-class FMallocStd : public FMalloc
+FMalloc& FMemory::GetAllocator() noexcept
 {
-public:
-	virtual void* Malloc(SIZE_T Count, uint32 Alignment) override
-	{
-		return std::malloc(Count);
-	}
+	alignas(FMallocSystem) static unsigned char Storage[sizeof(FMallocSystem)];
+	static FMalloc* const Allocator =
+		::new(static_cast<void*>(Storage)) FMallocSystem();
 
-	virtual void* Realloc(void* Original, SIZE_T Count, uint32 Alignment) override
-	{
-		return std::realloc(Original, Count);
-	}
-
-	virtual void Free(void* Original)
-	{
-		std::free(Original);
-	}
-	virtual const char* GetDescriptiveName() const override { return "Standard CRT Allocator"; }
-};
-
-FMalloc* GMalloc = nullptr;
-FMalloc* FMemory::GAllocator = nullptr;
-
-void FMemory::SetupMemoryPools()
-{
-	check(GMalloc == nullptr);
-	static FMallocStd StdAllocator;
-	GMalloc = &StdAllocator;
-	GAllocator = GMalloc;
+	return *Allocator;
 }
 
-void* FMemory::Malloc(SIZE_T Count, uint32 Alignment)
+void FMemory::Initialize()noexcept { (void)GetAllocator(); }
+void* FMemory::Malloc(SIZE_T Size, uint32 Alignment) noexcept { return GetAllocator().Malloc(Size, Alignment); }
+void* FMemory::Realloc(void* Original, SIZE_T Size, uint32 Alignment) noexcept { return GetAllocator().Realloc(Original, Size, Alignment); }
+void* FMemory::TryMalloc(SIZE_T Size, uint32 Alignment) noexcept { return GetAllocator().TryMalloc(Size, Alignment); }
+void* FMemory::TryRealloc(void* Original, SIZE_T Size, uint32 Alignment) noexcept { return GetAllocator().TryRealloc(Original, Size, Alignment); }
+void FMemory::Free(void* Original) noexcept { if (Original)GetAllocator().Free(Original); }
+bool FMemory::GetAllocationSize(const void* Original, SIZE_T& Out) noexcept
 {
-	return GMalloc->Malloc(Count, Alignment);
+	Out = 0;
+	return Original ? GetAllocator().GetAllocationSize(Original, Out) : false;
 }
-
-void* FMemory::Realloc(void* Original, SIZE_T Count, uint32 Alignment)
-{
-	return GMalloc->Realloc(Original, Count, Alignment);
-}
-
-void FMemory::Free(void* Original)
-{
-	if (Original)
-	{
-		GMalloc->Free(Original);
-	}
-}
-
-void* FMemory::Memmove(void* Dest, const void* Src, SIZE_T Count)
-{
-	return std::memmove(Dest, Src, Count);
-}
-
-void* FMemory::Memcpy(void* Dest, const void* Src, SIZE_T Count)
-{
-	return std::memcpy(Dest, Src, Count);
-}
-
-void* FMemory::Memzero(void* Dest, SIZE_T Count)
-{
-	return std::memset(Dest, 0, Count);
-}
+void* FMemory::Memcpy(void* Dest, const void* Src, SIZE_T Size) noexcept { return Size ? std::memcpy(Dest, Src, Size) : Dest; }
+void* FMemory::Memmove(void* Dest, const void* Src, SIZE_T Size) noexcept { return Size ? std::memmove(Dest, Src, Size) : Dest; }
+void* FMemory::Memset(void* Dest, uint8 Value, SIZE_T Size) noexcept { return Size ? std::memset(Dest, Value, Size) : Dest; }
+void* FMemory::Memzero(void* Dest, SIZE_T Size)noexcept { return Memset(Dest, 0, Size); }
+int FMemory::Memcmp(const void* A, const void* B, SIZE_T Size)noexcept { return Size ? std::memcmp(A, B, Size) : 0; }
