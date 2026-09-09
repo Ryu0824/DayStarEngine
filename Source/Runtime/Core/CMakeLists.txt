@@ -9,6 +9,8 @@ set(CORE_SOURCES
 	Private/HAL/PlatformProcess.cpp
 	Private/Modules/ModuleManager.cpp
 	Private/CoreGlobals.cpp
+	Private/HAL/PageRegion.cpp
+	Private/HAL/Windows/WindowsPlatformMemory.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})
