@@ -2,6 +2,7 @@
 #include "UObject/Object.h"
 #include "Containers/Array.h"
 #include "GameFrameWork/Actor.h"
+#include "UObject/UObjectGlobals.h"
 
 class ENGINE_API UWorld : public UObject
 {
@@ -32,5 +33,5 @@ public:
 
 private:
 	TArray<AActor*> Actors;
-	bool bHasBeginPlay = false;
+	bool bHasBegunPlay = false;
 };

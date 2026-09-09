@@ -92,6 +92,16 @@ public:
 	ElementType& operator[](int Index) { check(Index < ArrayMax); return static_cast<ElementType*>(AllocatorInstance.Data)[Index];}
 	const ElementType& operator[](int Index) const { check(Index < ArrayMax); return static_cast<ElementType*>(AllocatorInstance.Data)[Index];}
 
+	ElementType* begin() noexcept
+	{
+		return GetData();
+	}
+
+	ElementType* end() noexcept
+	{
+		return GetData() + ArrayNum;
+	}
+
 private:
 	typename Allocator::ForAnyElementType AllocatorInstance;
 	int32 ArrayNum;

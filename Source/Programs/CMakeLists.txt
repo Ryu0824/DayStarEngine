@@ -6,8 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(EngineLoopTest
-	LaunchTests/EngineLoopTest.cpp
+add_executable(GameFrameworkTest
+	EngineTests/GameFrameworkTest.cpp
 )
 
-target_link_libraries(EngineLoopTest PRIVATE Core RenderCore Launch gtest_main)
+target_link_libraries(GameFrameworkTest PRIVATE Core RenderCore Launch Engine gtest_main)
