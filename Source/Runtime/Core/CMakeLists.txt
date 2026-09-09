@@ -14,6 +14,7 @@ set(CORE_SOURCES
 	Private/HAL/FMalloc.cpp
 	Private/HAL/MallocSystem.cpp
 	Private/HAL/SystemHeap.cpp
+	Private/HAL/MallocBinned.cpp
 )
 
 add_library(Core SHARED ${CORE_SOURCES})
