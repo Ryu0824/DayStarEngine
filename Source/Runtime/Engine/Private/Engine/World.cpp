@@ -2,7 +2,7 @@
 
 void UWorld::BeginPlay()
 {
-	bHasBeginPlay = true;
+	bHasBegunPlay = true;
 	for (AActor* Actor : Actors)
 	{
 		if (Actor && !Actor->bPendingKill)
