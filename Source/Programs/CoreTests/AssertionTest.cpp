@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <Misc/AssertionMacros.h>
+#include "Misc/AssertionMacros.h"
 #include <Logging/LogMacros.h>
 
 class CoreAssertionTestFixture : public ::testing::Test
