@@ -22,8 +22,12 @@ public:
 
 	UClass* GetClass() const { return ClassPrivate; }
 
-	void* operator new(SIZE_T Size) = delete;
-	void operator delete(void* Ptr) = delete;
+	virtual UClass* GetClass() const { return UObject::StaticClass(); }
+
+	static UClass* StaticClass();
+
+	//void* operator new(SIZE_T Size) = delete;
+	//void operator delete(void* Ptr) = delete;
 
 	bool HasAnyFlags(uint32 FlagsToCheck) const { return (ObjectFlags & FlagsToCheck) != 0; }
 	void SetFlags(uint32 NewFlags) { ObjectFlags |= NewFlags; }

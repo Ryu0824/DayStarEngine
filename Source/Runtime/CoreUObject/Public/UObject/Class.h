@@ -1,29 +1,30 @@
 #pragma once
-#include "CoreTypes.h"
 #include "CoreUObjectAPI.h"
+#include "UObject/Object.h"
 #include "Containers/UnrealString.h"
 
-class UObject;
-
-class COREUOBJECT_API UField
+class COREUOBJECT_API FProperty
 {
 public:
-	virtual ~UField() = default;
 	FString Name;
+	int32 Offset;
+
+	FProperty(const FString& InName, int32 InOffset)
+		:Name(InName), Offset(InOffset){}
 };
 
-class COREUOBJECT_API UStruct : public UField
+class COREUOBJECT_API UClass : public UObject
 {
 public:
-	UStruct* SuperStruct = nullptr;
-};
+	FString ClassName;
+	UClass* SuperClass;
+	TArray<FProperty*> Properties;
 
-class COREUOBJECT_API UClass : public UStruct
-{
-public:
-	using ClassConstructorType = UObject* (*)(void* AllocatedMemory);
+	UClass(const FString& InClassName, UClass* InSuperClass)
+		:ClassName(InClassName), SuperClass(InSuperClass){ }
 
-	ClassConstructorType ClassConstructor = nullptr;
-
-	int32 ClassSize = 0;
+	void AddProperty(FProperty* InProperty)
+	{
+		Properties.Add(InProperty);
+	}
 };

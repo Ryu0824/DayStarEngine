@@ -19,4 +19,4 @@ Makefile
 *.png
 
 compile_commands.json
-.vscode/
+.vscode/CMakeUserPresets.json

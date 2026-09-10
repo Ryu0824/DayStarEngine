@@ -2,7 +2,7 @@
 #include "HAL/FMemory.h"
 #include "Delegates/DelegateSignatureImpl.h"
 #include "Delegates/MulticastDelegate.h"
-#include "Templates/MakeShared.h"
+#include "Templates/SharedPointer.h"
 
 class CoreDelegateTestFixture : public ::testing::Test
 {

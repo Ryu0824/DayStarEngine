@@ -1,0 +1,72 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 2,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-vs2026",
+      "displayName": "Windows x64 - Visual Studio 2026 - Tests",
+      "generator": "Visual Studio 18 2026",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/out/build/windows-vs2026",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON"
+      }
+    },
+    {
+      "name": "windows-vs2026-no-tests",
+      "displayName": "Windows x64 - Visual Studio 2026 - No Tests",
+      "inherits": "windows-vs2026",
+      "binaryDir": "${sourceDir}/out/build/windows-vs2026-no-tests",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-vs2026",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-debug-core",
+      "configurePreset": "windows-vs2026",
+      "configuration": "Debug",
+      "targets": [
+        "CoreTests"
+      ]
+    },
+    {
+      "name": "windows-debug-no-tests",
+      "configurePreset": "windows-vs2026-no-tests",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-vs2026",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "jobs": 1,
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "windows-debug-core",
+      "inherits": "windows-debug",
+      "filter": { 
+        "include": {
+          "label": "^CoreTests$"
+        }
+      }
+    }
+  ]
+}

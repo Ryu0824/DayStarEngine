@@ -22,7 +22,7 @@ public:
 	using MethodPtr = RetVal (UserClass::*)(Args...);
 
 	FSPMethodDelegatePayload(const TSharedPtr<UserClass, Mode>& InUserObject, MethodPtr InMethod)
-		:UserObjectContext(InUserObject)
+		: UserObjectContext(InUserObject)
 		, Method(InMethod)
 	{
 	}
@@ -37,12 +37,11 @@ public:
 		TSharedPtr<UserClass, Mode> PinnedObject = UserObjectContext.Pin();
 		if (PinnedObject.IsValid())
 		{
-			return (PinnedObject.Get()->*Method)(std::forward<Args>(args)...);
+			return (PinnedObject.operator->()->*Method)(std::forward<Args>(args)...);
 		}
 
 		return RetVal();
 	}
-
 
 private:
 	TWeakPtr<UserClass, Mode> UserObjectContext;
