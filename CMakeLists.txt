@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.2.0)
 project(DayStarEngine VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -11,9 +11,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
 
 add_subdirectory(Source/Runtime/Core)
 add_subdirectory(Source/Runtime/CoreUObject)
-add_subdirectory(Source/Programs)
 add_subdirectory(Source/Runtime/RHI)
 add_subdirectory(Source/Runtime/RenderCore)
 add_subdirectory(Source/Runtime/ApplicationCore)
 add_subdirectory(Source/Runtime/Launch)
 add_subdirectory(Source/Runtime/Engine)
+# BUILD_TESTING=OFF also avoids fetching GoogleTest.
+include(CTest)
+if(BUILD_TESTING)
+	add_subdirectory(Source/Programs)
+endif()

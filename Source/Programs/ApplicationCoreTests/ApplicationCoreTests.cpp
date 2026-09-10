@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "HAL/FMemory.h"
 #include "GenericPlatform/GenericApplication.h"
 #include "GenericPlatform/GenericWindow.h"
 #include "GenericPlatform/GenericApplicationMessageHandler.h"
