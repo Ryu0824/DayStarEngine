@@ -81,14 +81,14 @@ FPlatformMemoryResult FPlatformMemory::TryAllocatePages(SIZE_T RequestedSize, FP
 		return { EPlatformMemoryError::InvalidArgument,0 };
 
 	const auto Constants = GetMemoryConstants();
-	const auto Maximum = (std::numeric_limits<SIZE_T>::max)();
+	constexpr auto Maximum = (std::numeric_limits<SIZE_T>::max)();
 	const auto Padding = Constants.PageSize - 1;
 	if (RequestedSize > Maximum - Padding)
 		return { EPlatformMemoryError::SizeOverflow,0 };
 	const auto RoundedSize = (RequestedSize + Padding) & ~Padding;
 
 	void* Base = ::VirtualAlloc(nullptr, RoundedSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-
+	
 	if (!Base)
 	{
 		const DWORD Code = ::GetLastError();
