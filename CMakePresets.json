@@ -44,6 +44,20 @@
       "name": "windows-debug-no-tests",
       "configurePreset": "windows-vs2026-no-tests",
       "configuration": "Debug"
+    },
+    {
+      "name": "windows-debug-memory",
+      "configurePreset": "windows-vs2026",
+      "configuration": "Debug",
+      "targets": [
+        "MemorySystemTests",
+        "MemoryLifetimeTests",
+        "MemoryBinnedTests",
+        "MemoryWindowsTests",
+        "MemorySystemInjectedTests",
+        "MemoryBinnedHostTests",
+        "MemoryPlatformHostTests"
+      ]
     }
   ],
   "testPresets": [
@@ -62,9 +76,18 @@
     {
       "name": "windows-debug-core",
       "inherits": "windows-debug",
-      "filter": { 
+      "filter": {
         "include": {
           "label": "^CoreTests$"
+        }
+      }
+    },
+    {
+      "name": "windows-debug-memory",
+      "inherits": "windows-debug",
+      "filter": {
+        "include": {
+          "label": "^MemoryTests$"
         }
       }
     }
