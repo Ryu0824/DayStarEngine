@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CoreTypes.h"
 #include "CoreAPI.h"
 
 enum class EPlatformMemoryError : uint8

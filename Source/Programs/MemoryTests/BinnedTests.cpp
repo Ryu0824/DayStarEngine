@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 	void* Q = A.TryRealloc(P, 31); REQUIRE(Q == P);
 	Q = A.TryRealloc(P, 100);REQUIRE(Q && Q != P);
 	for (int i = 0;i < 24;++i)REQUIRE(static_cast<unsigned char*>(Q)[i] == 0x37);
-	P = A.TryRealloc(Q, 200, 65536)REQUIRE(P && reinterpret_cast<std::uintptr_t>(P) % 65536 == 0);
+	P = A.TryRealloc(Q, 200, 65536);REQUIRE(P && reinterpret_cast<std::uintptr_t>(P) % 65536 == 0);
 	for (int i = 0;i < 24;++i)REQUIRE(static_cast<unsigned char*>(P)[i] == 0x37);
 	REQUIRE(A.TryRealloc(P, 0) == nullptr);Empty(A);
 #ifdef DAYSTAR_TEST_BINNED_PLATFORM
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 		for (int i = 0;i < 24;++i) REQUIRE(static_cast<unsigned char*>(P)[i] == 0x48);
 		auto After = A.GetStats();
 		REQUIRE(After.RequestedBytes == Before.RequestedBytes && After.DataRegionBytes == Before.DataRegionBytes);
-		REQUIRE(After.MetadataRegionBytes == Before.MetadataRegionBytes && GetBinnedTestOutStanding() == Regions);
+		REQUIRE(After.MetadataRegionBytes == Before.MetadataRegionBytes && GetBinnedTestOutstanding() == Regions);
 		A.Free(P); Empty(A);
 	}
 #endif

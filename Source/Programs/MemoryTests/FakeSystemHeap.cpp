@@ -10,7 +10,7 @@
 #include <unordered_map>
 namespace
 {
-	struct Block { void* Raw; std::size_t Size };
+	struct Block { void* Raw; std::size_t Size; };
 	std::mutex Mutex;
 	std::unordered_map<void*, Block> Blocks;
 	std::atomic<std::size_t> Moves{ 0 };
@@ -35,7 +35,7 @@ std::size_t GetMemoryTestShiftedReallocs() { return Moves.load(); }
 void* SystemMalloc(std::size_t Size) noexcept
 {
 	if (GMemoryTestFailNextMalloc) { GMemoryTestFailNextMalloc = false; return nullptr; }
-	std::lock_guard(Mutex);
+	std::lock_guard Guard(Mutex);
 	return Allocate(Size);
 }
 

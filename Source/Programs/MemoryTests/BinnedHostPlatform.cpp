@@ -13,15 +13,15 @@ std::size_t GetBinnedTestOutstanding() { return GBinnedTestRegions.size(); }
 
 FPlatformMemoryConstants FPlatformMemory::GetMemoryConstants() noexcept { return { GBinnedTestPageSize,64 * 1024 }; }
 FPlatformMemoryCapabilities FPlatformMemory::GetMemoryCapabilities() noexcept { return {}; }
-FPlatformMemoryResult FPlatformMemory::TryAllocatePages(std::size_t Size, FPageRegion& Out) noexcept
+FPlatformMemoryResult FPlatformMemory::TryAllocatePages(SIZE_T Size, FPageRegion& Out) noexcept
 {
 	if (!Size)return { EPlatformMemoryError::InvalidArgument,0 };
-	if (Out.IsValid()) { EPlatformMemoryError::InvalidState, 0 };
+	if (Out.IsValid()) return { EPlatformMemoryError::InvalidState, 0 };
 	auto Page = GBinnedTestPageSize;
 	if (Size > (std::numeric_limits<std::size_t>::max)() - (Page - 1))return { EPlatformMemoryError::SizeOverflow,0 };
 	if (GBinnedTestFailAfter == 0) { GBinnedTestFailAfter = -1;return { EPlatformMemoryError::OutOfMemory,0 }; }
 	if (GBinnedTestFailAfter > 0)--GBinnedTestFailAfter;
-	auto Rounded = (SIZE + Page - 1) & ~(Page - 1);
+	auto Rounded = (Size + Page - 1) & ~(Page - 1);
 	void* Base = AllocatedHostAlignedMemory(Page, Rounded);
 	if (!Base) return { EPlatformMemoryError::OutOfMemory,0 };
 	std::memset(Base,0, Rounded);

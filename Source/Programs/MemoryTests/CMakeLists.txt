@@ -3,14 +3,14 @@ set(MemoryCoreRoot "${PROJECT_SOURCE_DIR}/Source/Runtime/Core")
 
 function(daystar_configure_memory_program TargetName)
 	target_compile_features(${TargetName} PRIVATE cxx_std_20)
-	target_link_libraries(${TargetName} PRIVATE Threads::FindOpenThreads)
+	target_link_libraries(${TargetName} PRIVATE Threads::Threads)
 	if(WIN32)
 		target_compile_definitions(${TargetName} PRIVATE UNICODE _UNICODE)
 	endif()
 endfunction()
 
 function(daystar_add_memory_case TestName TargetName)
-	add_test(NAME ${TestName} COMMAND ${CMAKE_GLOBAL_AUTOGEN_TARGET_NAME} ${ARGN})
+	add_test(NAME ${TestName} COMMAND ${TargetName} ${ARGN})
 	set_tests_properties(${TestName} PROPERTIES LABELS "MemoryTests" TIMEOUT 60)
 endfunction()
 
@@ -39,7 +39,7 @@ function(daystar_add_memory_exit_case TestName TargetName Mode ExpectedCode)
 			"-DEXPECTED_CODE=${ExpectedCode}"
 			-P "${CMAKE_CURRENT_SOURCE_DIR}/CheckExitCode.cmake"
 	)
-	set_tests_properties(${TestForSTDNamespace} PROPERTIES LABELS "MemoryTests;MemoryDeathTests" TIMEOUT 30)
+	set_tests_properties(${TestName} PROPERTIES LABELS "MemoryTests;MemoryDeathTests" TIMEOUT 30)
 endfunction()
 
 daystar_add_memory_native(MemorySystemTests SystemMemoryTests.cpp)
@@ -76,7 +76,7 @@ if(DAYSTAR_BUILD_MEMORY_FAULT_TESTS)
 		BinnedHostPlatform.cpp BinnedTests.cpp
 	)
 	target_compile_definitions(MemoryBinnedHostTests PRIVATE DAYSTAR_TEST_BINNED_PLATFORM)
-	daystar_add_memory_case(Memory.BinnedSimulated4K MemoryBinnedHostTests noraml)
+	daystar_add_memory_case(Memory.BinnedSimulated4K MemoryBinnedHostTests normal)
 	daystar_add_memory_case(Memory.BinnedSimulated16K MemoryBinnedHostTests page16K)
 	daystar_add_memory_exit_case(Memory.BinnedInvalidAlignment MemoryBinnedHostTests badalign 91)
 	daystar_add_memory_exit_case(Memory.BinnedInteriorPointer MemoryBinnedHostTests interior 91)

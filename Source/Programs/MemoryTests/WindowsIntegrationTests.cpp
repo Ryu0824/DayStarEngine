@@ -1,4 +1,4 @@
-#include "HAL/PlatformMemroy.h"
+#include "HAL/PlatformMemory.h"
 #include "TestCheck.h"
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -23,18 +23,18 @@ int main()
 {
 	std::atomic<bool> Start{ false };
 	std::vector<std::thread> Workers;
-	for (int index = 0;index < 8;++Index)
+	for (int index = 0;index < 8;++index)
 		Workers.emplace_back([&] {
-			while (!Start.load(std::memory_order_acquire)) std::this_thread.yield();
-			for (int Iteration = 0;Iteration < 100;++Iteration) {
-				FPageRegion Region;
-				REQUIRE(FPlatformMemory::TryAllocatePages(5000, Region).Succeeded());
-				auto* Bytes = static_cast<unsigned char*>(Region.GetBase());
-				REQUIRE(Bytes[0] == 0 && Bytes[Region.GetSize() - 1] == 0);
-				Bytes[0] = 42;
-				Bytes[Region - GetSize() - 1] = 91;
-			}
-		});
+		while (!Start.load(std::memory_order_acquire)) std::this_thread::yield();
+		for (int Iteration = 0;Iteration < 100;++Iteration) {
+			FPageRegion Region;
+			REQUIRE(FPlatformMemory::TryAllocatePages(5000, Region).Succeeded());
+			auto* Bytes = static_cast<unsigned char*>(Region.GetBase());
+			REQUIRE(Bytes[0] == 0 && Bytes[Region.GetSize() - 1] == 0);
+			Bytes[0] = 42;
+			Bytes[Region.GetSize() - 1] = 91;
+		}
+			});
 	Start.store(true, std::memory_order_release);
 	for (auto& Workers : Workers) Workers.join();
 
@@ -43,13 +43,13 @@ int main()
 	::GetSystemInfo(&Native);
 	REQUIRE(Constants.PageSize == Native.dwPageSize);
 	REQUIRE(Constants.AllocationGranularity == Native.dwAllocationGranularity);
-	const auto Caps = FPlatformMemory::GetMemoryCapbilities();
-	REQUIRE(!Caps.SupportsSeparateReserve && !Caps.SupportsPratialActivation);
-	REQUIRE(!Caps.SupportsPartialDeactivation && !Caps.SupportsProtectionChanges);
+	const auto Caps = FPlatformMemory::GetMemoryCapabilities();
+	REQUIRE(!Caps.SupportSeparateReserve && !Caps.SupportPartialActivation);
+	REQUIRE(!Caps.SupportPartialDecativation && !Caps.SupportProtectionChanges);
 
 	for (const auto Requested : { std::size_t(1), Constants.PageSize - 1,
-								Constants.PageSize, Constants.PageSize_1,
-								Constants.AllocationGranularity + 1})
+								Constants.PageSize, Constants.PageSize + 1,
+								Constants.AllocationGranularity + 1 })
 	{
 		FPageRegion Region;
 		REQUIRE(FPlatformMemory::TryAllocatePages(Requested, Region).Succeeded());
@@ -68,7 +68,7 @@ int main()
 		auto* Bytes = static_cast<unsigned char*>(Region.GetBase());
 		for (std::size_t Byte = 0; Byte < Region.GetSize();++Byte)
 		{
-			REQUIRE(Bytest[Byte] == 0);
+			REQUIRE(Bytes[Byte] == 0);
 			Bytes[Byte] = static_cast<unsigned char>(Byte % 251);
 		}
 		for (std::size_t Byte = 0;Byte < Region.GetSize();++Byte)
@@ -94,8 +94,8 @@ int main()
 
 	FPageRegion ToTransfer;
 	REQUIRE(FPlatformMemory::TryAllocatePages(1, ToTransfer).Succeeded());
-	*static_cast<unsigned char*>(ToTransfer.GetBase()) == 73;
-	std::thread Consumer([ShowOwnedPopups = std::move(ToTransfer)]()mutable
+	*static_cast<unsigned char*>(ToTransfer.GetBase()) = 73;
+	std::thread Consumer([Owned = std::move(ToTransfer)]()mutable
 		{
 			REQUIRE(*static_cast<unsigned char*>(Owned.GetBase()) == 73);
 			REQUIRE(FPlatformMemory::ReleasePages(Owned).Succeeded());

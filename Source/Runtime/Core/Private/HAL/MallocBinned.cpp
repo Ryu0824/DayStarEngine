@@ -20,7 +20,6 @@ namespace
 		FPlatformMemory::EmergencyTerminate({ EPlatformMemoryError::InvalidArgument,0 });
 	}
 
-	// A function that checks whether the address alignment value is a power of 2.
 	SIZE_T Normalize(uint32 Alignment) noexcept
 	{
 		SIZE_T Result = Alignment == 0 ? 16 : Alignment;
@@ -28,10 +27,8 @@ namespace
 		return Result < 16 ? 16 : Result;
 	}
 
-	// An addition function that checks whether a calculation exceeds the range of virtual address values ​​representable by the system.
 	bool Add(SIZE_T A, SIZE_T B, SIZE_T& Out) noexcept
 	{
-		// The reason it is not expressed as A+B is that A+B might exceed the range of values ​​representable by the corresponding variable type.
 		if (A > (std::numeric_limits<SIZE_T>::max)() - B)return false;
 		Out = A + B;
 		return true;
@@ -42,10 +39,8 @@ namespace
 	{
 		SIZE_T Aligned = 0;
 
-		// Ensure that the total data value includes the maximum padding bit value required for the alignment.
 		if (!Add(Total, Alignment - 1, Aligned))return false;
 
-		// If the values ​​are already sorted, reset them.
 		Aligned &= ~(Alignment - 1);
 		constexpr auto Maximum = (std::numeric_limits<SIZE_T>::max)();
 		if (Count > (Maximum - Aligned) / ItemSize)return false;

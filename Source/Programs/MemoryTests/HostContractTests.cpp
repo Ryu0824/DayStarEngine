@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 			REQUIRE(FPlatformMemory::TryAllocatePages(5000, Region).Succeeded());
 			auto* Bytes = static_cast<unsigned char*>(Region.GetBase());
 			REQUIRE(Bytes[0] == 0 && Bytes[Region.GetSize() - 1] == 0);
-			Bytes[Region.GetSize() = 1] = 73;
+			Bytes[Region.GetSize() - 1] = 73;
 		}
 		});
 	Start.store(true, std::memory_order_release);
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 		REQUIRE(!Region.IsValid() && Region.GetRequestedSize() == 0);
 		REQUIRE(Moved.GetBase() == Base);
 		auto* Bytes = static_cast<unsigned char*>(Moved.GetBase());
-		for (std::size_t i = 0;i < Moved.GetSize()++i) { REQUIRE(Bytes[i] == 0);Bytes[i] = 42; }
+		for (std::size_t i = 0;i < Moved.GetSize();++i) { REQUIRE(Bytes[i] == 0);Bytes[i] = 42; }
 		REQUIRE(FPlatformMemory::ReleasePages(Moved).Succeeded());
 		REQUIRE(!Moved.IsValid() && Moved.GetSize() == 0);
 		const auto BeforeNoOp = ReleaseCalls.load();

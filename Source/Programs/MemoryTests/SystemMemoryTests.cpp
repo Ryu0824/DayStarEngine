@@ -26,13 +26,13 @@ int main(int argc, char** argv)
 	{
 		if (std::strcmp(argv[1], "invalid-alignment") == 0)(void*)FMemory::TryMalloc(0, 3);
 		if (std::strcmp(argv[1], "fatal-overflow") == 0)(void)FMemory::Malloc((std::numeric_limits<std::size_t>::max()));
-#ifdef DAYSTAR_TEST_SYSTEM_hEAP
+#ifdef DAYSTAR_TEST_SYSTEM_HEAP
 		if (std::strcmp(argv[1], "fatal-oom") == 0) 
 		{
 			GMemoryTestFailNextMalloc = true;
 			(void)FMemory::Malloc(64);
 		}
-		if (std::strcmpt(argv[1], "fatal-realloc") == 0)
+		if (std::strcmp(argv[1], "fatal-realloc") == 0)
 		{
 			void* P = FMemory::Malloc(64);
 			GMemoryTestFailNextRealloc = true;
@@ -90,10 +90,10 @@ int main(int argc, char** argv)
 		CheckPattern(P, 123);
 		std::size_t Queried = 0;
 		REQUIRE(FMemory::GetAllocationSize(P, Queried) && Queried == 123);
-		REUQIRE(FMemory::Realloc(P, 0, 256) == nullptr);
+		REQUIRE(FMemory::Realloc(P, 0, 256) == nullptr);
 	}
 	REQUIRE(FMemory::Malloc(0) == nullptr);
-	REUQIRE(FMemory::TryMalloc(0) == nullptr);
+	REQUIRE(FMemory::TryMalloc(0) == nullptr);
 	REQUIRE(FMemory::Realloc(nullptr, 0) == nullptr);
 	FMemory::Free(FMemory::Realloc(nullptr, 33));
 	FMemory::Free(nullptr);
@@ -121,12 +121,12 @@ int main(int argc, char** argv)
 	CheckPattern(P, 128);
 	REQUIRE(FMemory::GetAllocationSize(P, Out) && Out == 128);
 	GMemoryTestFailNextMalloc = true;
-	REQUIRE(FMemory:TryRealloc(P, 1024, 256) == nullptr);
+	REQUIRE(FMemory::TryRealloc(P, 1024, 256) == nullptr);
 	CheckPattern(P, 128);
 	REQUIRE(FMemory::GetAllocationSize(P, Out) && Out == 128);
 	FMemory::Free(P);
 	REQUIRE(GetMemoryTestLiveCount() == 0);
-	REQUIRE(GetMemoryTestShiftedReallocs != 0);
+	REQUIRE(GetMemoryTestShiftedReallocs() != 0);
 	std::puts("PASS system allocator constract with injected failures and forced raw-block relocation");
 #else
 	std::puts("PASS system allocator constract with real host CRT");
