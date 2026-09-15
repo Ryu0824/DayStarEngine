@@ -1,4 +1,5 @@
 #pragma once
+#include "CoreTypes.h"
 #include "CoreAPI.h"
 
 class CORE_API FMalloc

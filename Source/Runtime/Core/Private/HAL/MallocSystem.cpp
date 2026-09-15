@@ -20,7 +20,7 @@ SIZE_T NormalizeAlignment(uint32 Alignment) noexcept
 	SIZE_T Value = Alignment == 0 ? 16 : Alignment;
 	if ((Value & (Value - 1)) != 0)
 		FPlatformMemory::EmergencyTerminate({ EPlatformMemoryError::InvalidArgument,0 });
-	return Value < alignof(FHeader) ? alignof(FHeader) : Value;
+	return Value < 16 ? 16 : Value;
 }
 
 bool ComputeTotal(SIZE_T Size, SIZE_T Alignment, SIZE_T& Total) noexcept

@@ -10,14 +10,20 @@ set(CORE_SOURCES
 	Private/Modules/ModuleManager.cpp
 	Private/CoreGlobals.cpp
 	Private/HAL/PageRegion.cpp
-	Private/HAL/Windows/WindowsPlatformMemory.cpp
 	Private/HAL/FMalloc.cpp
 	Private/HAL/MallocSystem.cpp
 	Private/HAL/SystemHeap.cpp
 	Private/HAL/MallocBinned.cpp
 )
 
+if(WIN32)
+	list(APPEND CORE_SOURCES Private/HAL/Windows/WindowsPlatformMemory.cpp)
+else()
+	message(FATAL_ERROR "Core Currently requires Windows x64. Other Operating system memory allocation system is not existed")
+endif()
+
 add_library(Core SHARED ${CORE_SOURCES})
+target_link_libraries(Core PRIVATE kernel32)
 
 target_include_directories(Core
 	PUBLIC

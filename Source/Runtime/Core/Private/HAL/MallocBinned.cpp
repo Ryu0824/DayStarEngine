@@ -5,51 +5,49 @@
 #include <new>
 #include <utility>
 
-constexpr SIZE_T Sizes[] = {
-	16,32,48,64,80,96,112,128,144,160,176,192,208,224,240,256,
-	384,512,768,1024,1536,2048,3072,4096 };
-constexpr SIZE_T SmallLimit = 4096;
-constexpr SIZE_T SlabTarget = 64 * 1024;
-constexpr SIZE_T LargeClass = 24;
-constexpr uint32 NoBlock = (std::numeric_limits<uint32>::max)();
-
-[[noreturn]] void InvalidUse() noexcept
+namespace
 {
-	FPlatformMemory::EmergencyTerminate({ EPlatformMemoryError::InvalidArgument,0 });
-}
+	constexpr SIZE_T Sizes[] = {
+		16,32,48,64,80,96,112,128,144,160,176,192,208,224,240,256,
+		384,512,768,1024,1536,2048,3072,4096 };
+	constexpr SIZE_T SmallLimit = 4096;
+	constexpr SIZE_T SlabTarget = 64 * 1024;
+	constexpr SIZE_T LargeClass = 24;
+	constexpr uint32 NoBlock = (std::numeric_limits<uint32>::max)();
 
-// A function that checks whether the address alignment value is a power of 2.
-SIZE_T Normalize(uint32 Alignment) noexcept
-{
-	SIZE_T Result = Alignment == 0 ? 16 : Alignment;
-	if ((Result & (Result - 1)) != 0) InvalidUse();
-	return Result < 16 ? 16 : Result;
-}
+	[[noreturn]] void InvalidUse() noexcept
+	{
+		FPlatformMemory::EmergencyTerminate({ EPlatformMemoryError::InvalidArgument,0 });
+	}
 
-// An addition function that checks whether a calculation exceeds the range of virtual address values ​​representable by the system.
-bool Add(SIZE_T A, SIZE_T B, SIZE_T& Out) noexcept
-{
-	// The reason it is not expressed as A+B is that A+B might exceed the range of values ​​representable by the corresponding variable type.
-	if (A > (std::numeric_limits<SIZE_T>::max)() - B)return false;
-	Out = A + B;
-	return true;
-}
+	SIZE_T Normalize(uint32 Alignment) noexcept
+	{
+		SIZE_T Result = Alignment == 0 ? 16 : Alignment;
+		if ((Result & (Result - 1)) != 0) InvalidUse();
+		return Result < 16 ? 16 : Result;
+	}
+
+	bool Add(SIZE_T A, SIZE_T B, SIZE_T& Out) noexcept
+	{
+		if (A > (std::numeric_limits<SIZE_T>::max)() - B)return false;
+		Out = A + B;
+		return true;
+	}
 
 
-bool AppendArray(SIZE_T Count, SIZE_T ItemSize, SIZE_T Alignment, SIZE_T& Total, SIZE_T& Offset) noexcept
-{
-	SIZE_T Aligned = 0;
+	bool AppendArray(SIZE_T Count, SIZE_T ItemSize, SIZE_T Alignment, SIZE_T& Total, SIZE_T& Offset) noexcept
+	{
+		SIZE_T Aligned = 0;
 
-	// Ensure that the total data value includes the maximum padding bit value required for the alignment.
-	if (!Add(Total, Alignment - 1, Aligned))return false;
+		if (!Add(Total, Alignment - 1, Aligned))return false;
 
-	// If the values ​​are already sorted, reset them.
-	Aligned &= ~(Alignment - 1);
-	constexpr auto Maximum = (std::numeric_limits<SIZE_T>::max)();
-	if (Count > (Maximum - Aligned) / ItemSize)return false;
-	Offset = Aligned;
-	Total = Aligned + Count * ItemSize;
-	return true;
+		Aligned &= ~(Alignment - 1);
+		constexpr auto Maximum = (std::numeric_limits<SIZE_T>::max)();
+		if (Count > (Maximum - Aligned) / ItemSize)return false;
+		Offset = Aligned;
+		Total = Aligned + Count * ItemSize;
+		return true;
+	}
 }
 
 struct FMallocBinned::FBlockRecord

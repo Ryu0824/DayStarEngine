@@ -83,3 +83,5 @@ daystar_add_test_target(EngineTests
 	MODULES Core CoreUObject Engine
 	SOURCES EngineTests/GameFrameworkTest.cpp
 )
+
+add_subdirectory(MemoryTests)
