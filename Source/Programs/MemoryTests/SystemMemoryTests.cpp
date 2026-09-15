@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 		if (std::strcmp(argv[1], "invalid-alignment") == 0)(void*)FMemory::TryMalloc(0, 3);
 		if (std::strcmp(argv[1], "fatal-overflow") == 0)(void)FMemory::Malloc((std::numeric_limits<std::size_t>::max()));
 #ifdef DAYSTAR_TEST_SYSTEM_HEAP
-		if (std::strcmp(argv[1], "fatal-oom") == 0) 
+		if (std::strcmp(argv[1], "fatal-oom") == 0)
 		{
 			GMemoryTestFailNextMalloc = true;
 			(void)FMemory::Malloc(64);
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 	{
 		std::size_t Size = 1;
 		auto* P = static_cast<unsigned char*>(FMemory::Malloc(Size, Align));
-		REQUIRE(reinterpret_cast<std::uintptr_t>(P) % (Align < 16 ? 16 : Align) == 0);
+		REQUIRE((reinterpret_cast<std::uintptr_t>(P) % (Align < 16 ? 16 : Align)) == 0);
 		FillPattern(P, Size);
 		for (std::size_t Next : {std::size_t(1001), std::size_t(1), std::size_t(512),
 			std::size_t(17), std::size_t(8193), std::size_t(32)})
