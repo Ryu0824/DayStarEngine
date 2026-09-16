@@ -21,3 +21,8 @@ include(CTest)
 if(BUILD_TESTING)
 	add_subdirectory(Source/Programs)
 endif()
+
+option(DAYSTAR_BUILD_MEMORY_BENCHMARKS "Build the opt-in memory benchmark" OFF)
+if(DAYSTAR_BUILD_MEMORY_BENCHMARKS)
+	add_subdirectory(Source/Programs/MemoryBenchmarks)
+endif()

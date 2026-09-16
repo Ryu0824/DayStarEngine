@@ -24,6 +24,16 @@
       "cacheVariables": {
         "BUILD_TESTING": "OFF"
       }
+    },
+    {
+      "name": "windows-vs2026-benchmark",
+      "inherits": "windows-vs2026",
+      "displayName": "Windows x64 - Release memory benchmark",
+      "binaryDir": "${sourceDir}/out/build/windows-vs2026-benchmark",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "DAYSTAR_BUILD_MEMORY_BENCHMARKS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -57,6 +67,14 @@
         "MemorySystemInjectedTests",
         "MemoryBinnedHostTests",
         "MemoryPlatformHostTests"
+      ]
+    },
+    {
+      "name": "windows-release-benchmark",
+      "configurePreset": "windows-vs2026-benchmark",
+      "configuration": "Release",
+      "targets": [
+        "MemoryBenchmarks"
       ]
     }
   ],
