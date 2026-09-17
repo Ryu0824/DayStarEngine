@@ -197,7 +197,7 @@ namespace
 				if constexpr (Verify)
 				{
 					if (reinterpret_cast<std::uintptr_t>(Slot.Pointer) % 16 != 0)
-						throw std::runtime_error(std::string(Backend.Name) + " does ont satisfy 16-byte alignment");
+						throw std::runtime_error(std::string(Backend.Name) + " does not satisfy 16-byte alignment");
 					std::size_t Actual = 0;
 					if (Backend.GetSize && (!Backend.GetSize(Backend.Context, Slot.Pointer, Actual) || Actual != Op.Size))
 						throw std::runtime_error("Allocation-size mismatch");
@@ -355,8 +355,8 @@ int main(int Argc, char** Argv)
 			throw std::runtime_error("FMemory backend changed; update benchmark labels/adapters before comparing");
 		FMallocBinned Binned;
 		std::array<FBackend, 3> Backends{ {
-				{"CRT",nullptr,AllocateCrt,ReleaseCrt,nullptr,nullptr},
 				{"System",&System,AllocateEngine,ReleaseEngine,QueryEngine,nullptr},
+				{"CRT",nullptr,AllocateCrt,ReleaseCrt,nullptr,nullptr},
 				{"Binned",static_cast<FMalloc*>(&Binned),AllocateEngine,ReleaseEngine,QueryEngine,&Binned}
 			} };
 		const auto RunId = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -371,14 +371,14 @@ int main(int Argc, char** Argv)
 		Samples.imbue(std::locale::classic());Summary.imbue(std::locale::classic());
 		Samples << std::setprecision(17);Summary << std::setprecision(17);
 		const std::string EnvironmentHeader = "run_id,platform,compiler,machine,logical_threads,seed,slots,cycles,repeats,warmups,alignment,touch_policy,";
-		Samples << EnvironmentHeader << "case,sizes,backend,round,order_position,allocation_paris,operation_count,elapsed_ns,ns_per_pair,hold_checkpoint_op,held_count_trace,held_requested_trace,stats_available,probe_held_active,probe_held_requested,probe_held_capacity,probe_held_data,probe_held_metadata,probe_held_slabs,probe_held_large,after_active,after_requested,after_capacity,after_data,after_metadata,after_slabs,after_large,timed_page_allocation_calls\n";
+		Samples << EnvironmentHeader << "case,sizes,backend,round,order_position,allocation_pairs,operation_count,elapsed_ns,ns_per_pair,hold_checkpoint_op,held_count_trace,held_requested_trace,stats_available,probe_held_active,probe_held_requested,probe_held_capacity,probe_held_data,probe_held_metadata,probe_held_slabs,probe_held_large,after_active,after_requested,after_capacity,after_data,after_metadata,after_slabs,after_large,timed_page_allocation_calls\n";
 		Summary << EnvironmentHeader << "case,sizes,backend,allocation_pairs,min_ns_per_pair,median_ns_per_pair,max_ns_per_pair\n";
 		const auto WriteEnvironment = [&](std::ostream& Stream)
 			{
 				Stream << RunId << ',' << Quote(PlatformName()) << ',' << Quote(CompilerName()) << ','
 					<< Quote(Options.Machine) << ',' << std::thread::hardware_concurrency() << ','
 					<< Options.Seed << ',' << Options.Slots << ',' << Options.Cycles << ',' << Options.Repeats
-					<< ",1,16,volatile_first_last_byte";
+					<< ",1,16,volatile_first_last_byte,";
 			};
 		std::cout << PlatformName() << "; " << CompilerName() << "; machine=" << Options.Machine << '\n'
 			<< "Single thread; whole-trace timing includes dispatch/bookkeeping and boundary writes.\n"
@@ -406,7 +406,7 @@ int main(int Argc, char** Argv)
 				(void)Measure(Backend, Trace, Options);
 			}
 
-			for (std::size_t Round = 0;Round < Options.Seed;++Round)
+			for (std::size_t Round = 0;Round < Options.Repeats;++Round)
 			{
 				const auto& Order = Orders[(Case + Round) % Orders.size()];
 				for (std::size_t Position = 0; Position < Order.size();++Position)
@@ -457,7 +457,7 @@ int main(int Argc, char** Argv)
 			if (!Samples || !Summary) throw std::runtime_error("CSV write failed; results incomplete");
 		}
 		Samples.close(); Summary.close();
-		if (Samples.fail() || Summary.fail()) throw std::runtime_error("CSV closed failed; resulst incomplete");
+		if (Samples.fail() || Summary.fail()) throw std::runtime_error("CSV close failed; results incomplete");
 		std::cout << "COMPLETE: " << SamplesPath << " and " << SummaryPath << '\n';
 		return 0;
 	}
